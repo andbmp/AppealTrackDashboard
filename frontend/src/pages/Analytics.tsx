@@ -8,6 +8,13 @@ import api from '../services/api';
 
 export default 
 function AnalyticsPage() {
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/dashboard/summary")
+      .then(res => res.json())
+      .then(res => { if (res.success) setDashboardData(res.data); });
+  }, []);
+
   const [mccWindow, setMccWindow] = useState<"harian" | "mingguan" | "bulanan">("harian");
 
   const maxHeat = Math.max(...heatmapData.flatMap(d => d.w));
@@ -40,7 +47,7 @@ function AnalyticsPage() {
         />
         <div className="p-5">
           <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={mccData}>
+            <BarChart data={dashboardData?.mccData || mccData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis dataKey="mcc" tick={{ fill: "#64748b", fontSize: 10, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
@@ -64,7 +71,7 @@ function AnalyticsPage() {
             </tr>
           </thead>
           <tbody>
-            {mccData.map((row, i) => (
+            {(dashboardData?.mccData || mccData).map((row, i) => (
               <tr key={i} className="border-b border-border/50 hover:bg-muted transition-colors">
                 <td className="px-4 py-3 text-[#00d4aa]">{row.mcc}</td>
                 <td className="px-4 py-3 text-foreground">{row.label}</td>
@@ -127,17 +134,17 @@ function AnalyticsPage() {
         <Card>
           <CardHead title="PJP Tiering — Juli 2026 (FR-Adv)" />
           <div className="p-4 space-y-2.5 max-h-80 overflow-y-auto">
-            {pjpList.map((pjp, i) => {
-              const vol = pjpVolumes[pjp.name]?.[6] ?? 2;
+            {(dashboardData?.top5 || pjpList).map((pjp, i) => {
+              const vol = pjp.vol;
               return (
                 <div key={i} className="flex items-center gap-3 text-sm font-sans">
-                  <TierBadge tier={pjp.tier} />
+                  <TierBadge tier={pjp.tier || 1} />
                   <span className="w-28 text-foreground truncate shrink-0">{pjp.name}</span>
                   <div className="flex-1 bg-muted rounded-full h-1">
                     <div className="h-1 rounded-full transition-all"
                       style={{
                         width: `${Math.min((vol / 178) * 100, 100)}%`,
-                        background: pjp.tier === 1 ? "#00d4aa" : pjp.tier === 2 ? "#3b82f6" : "#64748b",
+                        background: pjp.tier || 1 === 1 ? "#00d4aa" : pjp.tier || 1 === 2 ? "#3b82f6" : "#64748b",
                       }} />
                   </div>
                   <span className="text-muted-foreground w-8 text-right shrink-0">{vol}</span>
@@ -158,17 +165,9 @@ function AnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {[
-                { pjp: "BCA",     rn: 48, rm: 29, wl: 41, rj: 5 },
-                { pjp: "Mandiri", rn: 39, rm: 24, wl: 35, rj: 3 },
-                { pjp: "GoPay",   rn: 35, rm: 18, wl: 28, rj: 4 },
-                { pjp: "BRI",     rn: 31, rm: 15, wl: 24, rj: 2 },
-                { pjp: "OVO",     rn: 28, rm: 13, wl: 22, rj: 3 },
-                { pjp: "BNI",     rn: 24, rm: 11, wl: 19, rj: 2 },
-                { pjp: "DANA",    rn: 21, rm:  9, wl: 17, rj: 1 },
-              ].map((row, i) => (
+              {(dashboardData?.actionPjpData || []).map((row: any, i: number) => (
                 <tr key={i} className="border-b border-border/50 hover:bg-muted transition-colors">
-                  <td className="px-3 py-2.5 text-[#00d4aa]">{row.pjp}</td>
+                  <td className="px-3 py-2.5 text-[#00d4aa] truncate max-w-[100px]">{row.pjp}</td>
                   <td className="px-3 py-2.5 text-right text-foreground">{row.rn}</td>
                   <td className="px-3 py-2.5 text-right text-blue-400">{row.rm}</td>
                   <td className="px-3 py-2.5 text-right text-purple-400">{row.wl}</td>
@@ -185,7 +184,7 @@ function AnalyticsPage() {
         <CardHead title="Tren Tahunan — Perbandingan Volume Per Bulan (FR-10)" />
         <div className="p-5">
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={monthlyTrend}>
+            <LineChart data={dashboardData?.monthlyTrend || monthlyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />

@@ -8,6 +8,13 @@ import api from '../services/api';
 
 export default 
 function LogPage() {
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/dashboard/summary")
+      .then(res => res.json())
+      .then(res => { if (res.success) setDashboardData(res.data); });
+  }, []);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -31,7 +38,7 @@ function LogPage() {
             </tr>
           </thead>
           <tbody>
-            {activityLog.map(log => (
+            {(dashboardData?.activityLog || activityLog).map(log => (
               <tr key={log.id} className="border-b border-border/50 hover:bg-muted transition-colors">
                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{log.time}</td>
                 <td className="px-4 py-3 text-foreground">{log.user}</td>

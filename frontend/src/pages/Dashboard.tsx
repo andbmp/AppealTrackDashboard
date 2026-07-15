@@ -47,10 +47,22 @@ function DashboardPage() {
       ))}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Appeal Bulan Ini"  value={dashboardData ? dashboardData.totalAppeals.toString() : "912"}  sub="Juli 2026 (s.d. hari ini)" trend="▲ 8.3% vs Jun" color="teal" />
-        <KPICard label="Status Done"       value={dashboardData ? dashboardData.resolved.toString() : "834"}  sub="Tingkat selesai 91.5%"     trend="▲ 2.1%"        color="blue" />
-        <KPICard label="Pending Review"    value={dashboardData ? dashboardData.pending.toString() : "78"}   sub="Dalam antrian"                                    color="amber" />
-        <KPICard label="Anomali Deteksi"   value={dashboardData ? dashboardData.anomalies.toString() : "12"} sub="T1: 7 · T2: 2 · T3: 3"                           color="slate" />
+        <KPICard label="Total Data Appeal" 
+          value={dashboardData ? dashboardData.totalAppeals.toLocaleString() : "0"}  
+          sub="Semua Riwayat" 
+          color="teal" />
+        <KPICard label="Status Selesai"       
+          value={dashboardData ? dashboardData.resolved.toLocaleString() : "0"}  
+          sub={dashboardData && dashboardData.totalAppeals > 0 ? `Tingkat selesai ${(dashboardData.resolved / dashboardData.totalAppeals * 100).toFixed(1)}%` : "Tingkat selesai 0%"}     
+          color="blue" />
+        <KPICard label="Dalam Antrian"    
+          value={dashboardData ? dashboardData.pending.toLocaleString() : "0"}   
+          sub={dashboardData && dashboardData.totalAppeals > 0 ? `Pending ${(dashboardData.pending / dashboardData.totalAppeals * 100).toFixed(1)}%` : "-"} 
+          color="amber" />
+        <KPICard label="Baris Ditolak / Gagal"   
+          value={dashboardData ? dashboardData.anomalies.toLocaleString() : "0"} 
+          sub="Baris Excel Kosong"                           
+          color="slate" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -58,7 +70,7 @@ function DashboardPage() {
           <CardHead title="Tren Volume Appeal 2026" extra={<span className="text-sm text-muted-foreground font-sans">Jan — Jul</span>} />
           <div className="p-5">
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={monthlyTrend}>
+              <AreaChart data={dashboardData?.monthlyTrend || monthlyTrend}>
                 <defs>
                   <linearGradient id="gDone" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#00d4aa" stopOpacity={0.3} />
@@ -86,15 +98,15 @@ function DashboardPage() {
           <div className="p-4">
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
-                <Pie data={actionData} cx="50%" cy="50%" innerRadius={45} outerRadius={75}
+                <Pie data={dashboardData?.actionData || actionData} cx="50%" cy="50%" innerRadius={45} outerRadius={75}
                   dataKey="value" paddingAngle={2}>
-                  {actionData.map((d, i) => <Cell key={i} fill={d.color} stroke="transparent" />)}
+                  {(dashboardData?.actionData || actionData).map((d: any, i: number) => <Cell key={i} fill={d.color} stroke="transparent" />)}
                 </Pie>
                 <Tooltip content={<Tip />} />
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-1.5 mt-3">
-              {actionData.map(d => (
+              {(dashboardData?.actionData || actionData).map((d: any) => (
                 <div key={d.name} className="flex items-center justify-between text-sm font-sans">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
@@ -113,7 +125,7 @@ function DashboardPage() {
           <CardHead title="Top 5 PJP — Juli 2026" />
           <div className="p-5">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={top5} layout="vertical">
+              <BarChart data={dashboardData?.top5 || []} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                 <XAxis type="number" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="name" tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} width={70} />
@@ -128,7 +140,7 @@ function DashboardPage() {
           <CardHead title="Jumlah Proses Per Tanggal" extra={<span className="text-sm text-muted-foreground font-sans">Juli 2026</span>} />
           <div className="p-5">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={dailyData}>
+              <BarChart data={dashboardData?.dailyData || dailyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 10, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
