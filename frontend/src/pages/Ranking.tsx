@@ -8,14 +8,21 @@ import api from '../services/api';
 
 export default 
 function RankingPage() {
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/dashboard/summary")
+      .then(res => res.json())
+      .then(res => { if (res.success) setDashboardData(res.data); });
+  }, []);
+
   const [selectedMonth, setSelectedMonth] = useState(6);
   const MONTH_LABELS = ["Jan 2026","Feb 2026","Mar 2026","Apr 2026","Mei 2026","Jun 2026","Jul 2026"];
 
-  const ranked = pjpList
-    .map(pjp => ({ ...pjp, vol: pjpVolumes[pjp.name]?.[selectedMonth] ?? 2 }))
-    .sort((a, b) => b.vol - a.vol)
+  const ranked = (dashboardData?.top5 || pjpList)
+    .map((pjp: any) => ({ ...pjp, vol: pjp.vol || 2 }))
+    .sort((a: any, b: any) => b.vol - a.vol)
     .slice(0, 10)
-    .map(d => ({ ...d, done: Math.floor(d.vol * 0.88) }));
+    .map((d: any) => ({ ...d, done: Math.floor(d.vol * 0.88), tier: d.tier || 1, type: d.type || 'Bank' }));
 
   return (
     <div className="space-y-5">
