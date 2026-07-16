@@ -22,7 +22,7 @@ function RankingPage() {
     .map((pjp: any) => ({ ...pjp, vol: pjp.vol || 2 }))
     .sort((a: any, b: any) => b.vol - a.vol)
     .slice(0, 10)
-    .map((d: any) => ({ ...d, done: Math.floor(d.vol * 0.88), tier: d.tier || 1, type: d.type || 'Bank' }));
+    .map((d: any) => ({ ...d, done: d.done ?? Math.floor(d.vol * 0.88), tier: d.tier || 1, type: d.type || 'Bank' }));
 
   return (
     <div className="space-y-5">
@@ -59,9 +59,9 @@ function RankingPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="w-16 bg-muted rounded-full h-1">
-                      <div className="bg-[#00d4aa] h-1 rounded-full" style={{ width: "88%" }} />
+                      <div className="bg-[#00d4aa] h-1 rounded-full" style={{ width: `${Math.round((pjp.done / pjp.vol) * 100)}%` }} />
                     </div>
-                    <span className="text-muted-foreground">88%</span>
+                    <span className="text-muted-foreground">{Math.round((pjp.done / pjp.vol) * 100)}%</span>
                   </div>
                 </td>
               </tr>
