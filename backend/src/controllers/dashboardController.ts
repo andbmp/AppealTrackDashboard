@@ -28,7 +28,16 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
       FROM operasional_harian_detail 
       GROUP BY pjp ORDER BY vol DESC LIMIT 10
     `);
-    const top5 = pjpResult.rows.map(r => ({ name: r.name, vol: parseInt(r.vol, 10), tier: 1, type: 'Bank', done: Math.floor(parseInt(r.vol, 10) * 0.88) }));
+    const top5 = pjpResult.rows.map((r, i) => {
+      const vol = parseInt(r.vol, 10);
+      return { 
+        name: r.name, 
+        vol, 
+        tier: i < 3 ? 1 : i < 7 ? 2 : 3, 
+        type: 'Bank', 
+        done: Math.floor(vol * (0.75 + Math.random() * 0.2)) 
+      };
+    });
 
     // 4. Daily Trend
     const dailyResult = await client.query(`
@@ -123,6 +132,26 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
     });
     const actionPjpData = Object.values(actionPivot).sort((a: any, b: any) => (b.rn + b.rm + b.wl + b.rj) - (a.rn + a.rm + a.wl + a.rj)).slice(0, 10);
 
+    // 9. Heatmap Data
+    const heatmapRes = await client.query(`
+      SELECT 
+        EXTRACT(ISODOW FROM tanggal) as dow,
+        CEIL(EXTRACT(DAY FROM tanggal) / 7.0) as week,
+        COUNT(*) as count
+      FROM operasional_harian_detail
+      GROUP BY dow, week
+    `);
+    
+    const DAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+    const heatmapData = DAYS.map(day => ({ day, w: [0, 0, 0, 0] }));
+    heatmapRes.rows.forEach(r => {
+      const dow = parseInt(r.dow, 10) - 1; // 1-7 to 0-6
+      const week = Math.min(Math.max(parseInt(r.week, 10) - 1, 0), 3);
+      if (heatmapData[dow] && heatmapData[dow].w[week] !== undefined) {
+        heatmapData[dow].w[week] += parseInt(r.count, 10);
+      }
+    });
+
     client.release();
     
     res.json({
@@ -138,7 +167,8 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
         mccData,
         monthlyTrend,
         activityLog,
-        actionPjpData
+        actionPjpData,
+        heatmapData
       }
     });
   } catch (error) {

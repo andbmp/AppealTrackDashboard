@@ -17,7 +17,7 @@ function AnalyticsPage() {
 
   const [mccWindow, setMccWindow] = useState<"harian" | "mingguan" | "bulanan">("harian");
 
-  const maxHeat = Math.max(...heatmapData.flatMap(d => d.w));
+  const maxHeat = Math.max(...(dashboardData?.heatmapData || heatmapData).flatMap((d: any) => d.w));
   const heatColor = (v: number) => {
     if (v === 0) return "bg-muted text-muted-foreground/30";
     const pct = v / maxHeat;
@@ -47,7 +47,7 @@ function AnalyticsPage() {
         />
         <div className="p-5">
           <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={dashboardData?.mccData || mccData}>
+            <BarChart data={dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.harian || mccData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis dataKey="mcc" tick={{ fill: "#64748b", fontSize: 10, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
@@ -71,7 +71,7 @@ function AnalyticsPage() {
             </tr>
           </thead>
           <tbody>
-            {(dashboardData?.mccData || mccData).map((row, i) => (
+            {(dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.harian || mccData).map((row: any, i: number) => (
               <tr key={i} className="border-b border-border/50 hover:bg-muted transition-colors">
                 <td className="px-4 py-3 text-[#00d4aa]">{row.mcc}</td>
                 <td className="px-4 py-3 text-foreground">{row.label}</td>
@@ -105,7 +105,7 @@ function AnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {heatmapData.map(row => (
+              {(dashboardData?.heatmapData || heatmapData).map((row: any) => (
                 <tr key={row.day}>
                   <td className="pr-4 py-1.5 text-muted-foreground font-semibold">{row.day}</td>
                   {row.w.map((v, wi) => (
