@@ -39,14 +39,6 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
     const dailyData = dailyResult.rows.reverse().map(r => ({ date: r.date, appeal: parseInt(r.appeal, 10), done: Math.floor(parseInt(r.appeal, 10) * 0.9) }));
 
     // 5. MCC Data
-<<<<<<< Updated upstream
-    const mccResult = await client.query(`
-      SELECT COALESCE(mcc, 'Unknown') as mcc, COUNT(*) as appeals 
-      FROM operasional_harian_detail 
-      GROUP BY mcc ORDER BY appeals DESC LIMIT 10
-    `);
-    const mccData = mccResult.rows.map(r => ({ mcc: r.mcc, appeals: parseInt(r.appeals, 10), label: 'Kategori', count: parseInt(r.appeals, 10) * 2, pct: 50 }));
-=======
     const maxDateRes = await client.query(`SELECT MAX(tanggal) as max_date FROM operasional_harian_detail`);
     const maxDate = maxDateRes.rows[0].max_date ? `'${new Date(maxDateRes.rows[0].max_date).toISOString().split('T')[0]}'` : 'CURRENT_DATE';
 
@@ -81,7 +73,6 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
       mingguan: await getMccWithDate(7),
       bulanan: await getMccWithDate(30)
     };
->>>>>>> Stashed changes
 
     // 6. Monthly Trend
     const monthlyResult = await client.query(`
