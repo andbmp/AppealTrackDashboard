@@ -92,6 +92,13 @@ export const processExcelUpload = async (filePath: string, originalName: string)
         INSERT INTO operasional_harian_detail (
           no_referensi, tanggal, appeal_worker, pjp, nama_merchant, mcc, action
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (tanggal, pjp, nama_merchant)
+        DO UPDATE SET
+          no_referensi = EXCLUDED.no_referensi,
+          appeal_worker = EXCLUDED.appeal_worker,
+          mcc = EXCLUDED.mcc,
+          action = EXCLUDED.action,
+          updated_at = CURRENT_TIMESTAMP
       `;
       
       await client.query(insertQuery, [noRef.toString(), dbTanggal, appealWorker, pjp, namaMerchant, mcc.toString(), action]);

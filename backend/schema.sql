@@ -1,14 +1,32 @@
 -- ==============================================================================
--- DATABASE SCHEMA: Dashboard Analisis Laporan Appeal (Sesuai Excel Operasional)
+-- DATABASE SCHEMA & DATA INITIALIZATION
+-- Dashboard Analisis Laporan Appeal Pendaftaran Merchant PJP
 -- ==============================================================================
 
--- Drop tabel lama jika sebelumnya sudah ada (opsional, agar bersih)
+-- ------------------------------------------------------------------------------
+-- CLEANUP (Opsional: Menghapus tabel lama jika ingin mengulang dari awal)
+-- ------------------------------------------------------------------------------
 DROP TABLE IF EXISTS operasional_harian_detail CASCADE;
 DROP TABLE IF EXISTS operasional_harian_blacklist CASCADE;
 DROP TABLE IF EXISTS operasional_harian_ktpnp CASCADE;
 DROP TABLE IF EXISTS summary_appeal CASCADE;
+DROP TABLE IF EXISTS master_mcc CASCADE;
+DROP TABLE IF EXISTS activity_logs CASCADE;
 
--- 1. TABEL: Operasional Harian Detail (Eskalasi Data Merchant)
+-- ------------------------------------------------------------------------------
+-- 1. TABEL MASTER: Merchant Category Code (MCC)
+-- ------------------------------------------------------------------------------
+CREATE TABLE master_mcc (
+    mcc_code VARCHAR(10) PRIMARY KEY,
+    description TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ------------------------------------------------------------------------------
+-- 2. TABEL OPERASIONAL UTAMA
+-- ------------------------------------------------------------------------------
+
+-- Tabel: Operasional Harian Detail (Eskalasi Data Merchant)
 CREATE TABLE operasional_harian_detail (
     id SERIAL PRIMARY KEY,
     no_referensi VARCHAR(100),
@@ -27,10 +45,12 @@ CREATE TABLE operasional_harian_detail (
     bukti_pendukung_4 TEXT,
     insert_whitelist BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Constraint agar fungsi UPSERT (ON CONFLICT) berjalan akurat saat ada pembaruan data
+    CONSTRAINT unique_appeal_merchant UNIQUE (tanggal, pjp, nama_merchant)
 );
 
--- 2. TABEL: Operasional Harian Blacklist
+-- Tabel: Operasional Harian Blacklist
 CREATE TABLE operasional_harian_blacklist (
     id SERIAL PRIMARY KEY,
     no_referensi VARCHAR(100),
@@ -50,7 +70,7 @@ CREATE TABLE operasional_harian_blacklist (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. TABEL: Operasional Harian Detail KTP & NPWP (KTPNP)
+-- Tabel: Operasional Harian Detail KTP & NPWP (KTPNP)
 CREATE TABLE operasional_harian_ktpnp (
     id SERIAL PRIMARY KEY,
     no_referensi VARCHAR(100),
@@ -68,7 +88,7 @@ CREATE TABLE operasional_harian_ktpnp (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. TABEL: Summary Appeal (Untuk keperluan agregasi pencapaian harian)
+-- Tabel: Summary Appeal (Untuk keperluan agregasi pencapaian harian makro)
 CREATE TABLE summary_appeal (
     id SERIAL PRIMARY KEY,
     tanggal DATE NOT NULL UNIQUE,
@@ -80,11 +100,22 @@ CREATE TABLE summary_appeal (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==============================================================================
--- INDEXES FOR PERFORMANCE OPTIMIZATION (Biar Dashboard Node.js Cepat Loading)
--- ==============================================================================
+-- Tabel: Audit Trail (Log Aktivitas Pengguna)
+CREATE TABLE activity_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    aktivitas TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ------------------------------------------------------------------------------
+-- 3. INDEXES FOR PERFORMANCE OPTIMIZATION (Mempercepat Loading Dashboard < 2 Detik)
+-- ------------------------------------------------------------------------------
 CREATE INDEX idx_ophariandetail_tanggal ON operasional_harian_detail(tanggal);
 CREATE INDEX idx_ophariandetail_pjp ON operasional_harian_detail(pjp);
 CREATE INDEX idx_opharianblacklist_tanggal ON operasional_harian_blacklist(tanggal);
 CREATE INDEX idx_opharian_ktpnp_tanggal ON operasional_harian_ktpnp(tanggal);
 CREATE INDEX idx_summary_appeal_tanggal ON summary_appeal(tanggal);
+

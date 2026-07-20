@@ -53,10 +53,16 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
 
     const getMccWithDate = async (days: number) => {
       const res = await client.query(`
-        SELECT COALESCE(mcc, 'Unknown') as mcc, COUNT(*) as appeals 
-        FROM operasional_harian_detail 
-        WHERE tanggal >= ${maxDate}::DATE - INTERVAL '${days} days'
-        GROUP BY mcc ORDER BY appeals DESC LIMIT 10
+        SELECT 
+          COALESCE(o.mcc, 'Unknown') as mcc, 
+          COALESCE(m.description, 'Kategori Tidak Diketahui') as label,
+          COUNT(o.id) as appeals 
+        FROM operasional_harian_detail o
+        LEFT JOIN master_mcc m ON o.mcc = m.mcc_code
+        WHERE o.tanggal >= ${maxDate}::DATE - INTERVAL '${days} days'
+        GROUP BY o.mcc, m.description 
+        ORDER BY appeals DESC 
+        LIMIT 10
       `);
       return res.rows.map(r => {
         const appeals = parseInt(r.appeals, 10);
@@ -64,7 +70,7 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
         return { 
           mcc: r.mcc, 
           appeals, 
-          label: 'Kategori', 
+          label: r.label, 
           count, 
           pct: Math.round((appeals / count) * 100) 
         };
