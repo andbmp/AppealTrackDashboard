@@ -138,7 +138,7 @@ function UploadPage() {
             </div>
           </Card>
           <Card>
-            <CardHead title="Error Log" extra={<span className="text-sm font-sans text-red-400">3 baris ditolak</span>} />
+            <CardHead title="Error Log" extra={<span className="text-sm font-sans text-red-400">{(uploadResult?.errors?.length || 0)} baris ditolak</span>} />
             <table className="w-full text-sm font-sans">
               <thead>
                 <tr className="border-b border-border">

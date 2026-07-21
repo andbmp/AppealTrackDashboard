@@ -8,11 +8,19 @@ export const processExcelUpload = async (filePath: string, originalName: string)
   const rawData = xlsx.utils.sheet_to_json<any[]>(workbook.Sheets[sheetName], { header: 1, raw: false });
   
   let headerIndex = 0;
+  let maxScore = 0;
   for (let i = 0; i < Math.min(20, rawData.length); i++) {
     const rowString = (rawData[i] || []).join(' ').toLowerCase();
-    if (rowString.includes('tanggal') || rowString.includes('pjp') || rowString.includes('merchant')) {
+    let score = 0;
+    if (rowString.includes('tanggal') || rowString.includes('date')) score += 3;
+    if (rowString.includes('pjp') || rowString.includes('mitra')) score += 2;
+    if (rowString.includes('merchant') || rowString.includes('toko')) score += 2;
+    if (rowString.includes('mcc')) score += 1;
+    if (rowString.includes('action') || rowString.includes('tindakan')) score += 1;
+    
+    if (score > maxScore) {
+      maxScore = score;
       headerIndex = i;
-      break;
     }
   }
 
@@ -36,27 +44,64 @@ export const processExcelUpload = async (filePath: string, originalName: string)
         normalizedRow[k.toLowerCase().trim()] = row[k];
       });
       
-      const noRef = normalizedRow['no'] || normalizedRow['no referensi'] || '';
-      const tanggalStr = normalizedRow['tanggal'] || '';
-      const appealWorker = normalizedRow['appeal worker'] || '';
-      const pjp = normalizedRow['pjp'] || '';
-      const namaMerchant = normalizedRow['nama merchant'] || '';
-      const mcc = normalizedRow['mcc'] || '';
-      const action = normalizedRow['action'] || '';
+      const findCol = (keywords: string[]) => {
+        for (const key of Object.keys(normalizedRow)) {
+          if (keywords.some(kw => key.includes(kw))) return normalizedRow[key];
+        }
+        return '';
+      };
       
-      if (!tanggalStr || !pjp || !namaMerchant) {
-        const availableCols = Object.keys(row).join(', ');
-        errors.push({ row: i + 2, reason: `Kolom Wajib Kosong. Kolom yg ditemukan: ${availableCols}` });
+      const noRef = findCol(['no referensi', 'referensi', 'no_ref', 'nomor']) || normalizedRow['no'] || '';
+      let tanggalStr = findCol(['tanggal', 'date']);
+      const appealWorker = findCol(['appeal worker', 'worker', 'pic']);
+      const pjp = findCol(['pjp', 'mitra']);
+      const namaMerchant = findCol(['nama merchant', 'merchant', 'toko']);
+      const mcc = findCol(['mcc', 'kategori']);
+      const action = findCol(['action', 'tindakan', 'aksi']);
+      
+      if (!tanggalStr && !pjp && !namaMerchant && !action) {
+        // Baris kosong / ghost row (biasanya karena sisa border/formula di bagian bawah Excel)
         continue;
       }
 
+      if (!tanggalStr || !pjp || !namaMerchant) {
+        const availableCols = Object.keys(row).join(', ');
+        errors.push({ row: i + headerIndex + 2, reason: `Kolom Wajib Kosong. Kolom yg ditemukan: ${availableCols}` });
+        continue;
+      }
+      
+      let dbTanggal = tanggalStr;
+      if (typeof tanggalStr === 'string') {
+        const d = new Date(tanggalStr);
+        if (!isNaN(d.getTime())) {
+          // MM/DD/YYYY atau YYYY-MM-DD
+          dbTanggal = d.toISOString().split('T')[0];
+        } else if (tanggalStr.includes('/')) {
+          // DD/MM/YYYY fallback
+          const parts = tanggalStr.split('/');
+          if (parts.length === 3 && parts[2].length === 4) {
+            dbTanggal = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          }
+        }
+      } else if (typeof tanggalStr === 'number') {
+        const d = new Date(Math.round((tanggalStr - 25569) * 86400 * 1000));
+        dbTanggal = d.toISOString().split('T')[0];
+      }
+
       const insertQuery = `
-        INSERT INTO appeal_merchant_harian (
+        INSERT INTO operasional_harian_detail (
           no_referensi, tanggal, appeal_worker, pjp, nama_merchant, mcc, action
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (tanggal, pjp, nama_merchant)
+        DO UPDATE SET
+          no_referensi = EXCLUDED.no_referensi,
+          appeal_worker = EXCLUDED.appeal_worker,
+          mcc = EXCLUDED.mcc,
+          action = EXCLUDED.action,
+          updated_at = CURRENT_TIMESTAMP
       `;
       
-      await client.query(insertQuery, [noRef.toString(), tanggalStr, appealWorker, pjp, namaMerchant, mcc.toString(), action]);
+      await client.query(insertQuery, [noRef.toString(), dbTanggal, appealWorker, pjp, namaMerchant, mcc.toString(), action]);
       inserted++;
     }
     
