@@ -1,146 +1,180 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { AlertTriangle, UploadCloud, RefreshCw, CheckCircle, Download, Search, Shield, Home, BarChart2, Layers, Settings, FileText, Activity, X, Menu, ChevronRight, Bell } from 'lucide-react';
-import { TierBadge, StatusBadge, Card, CardHead, KPICard, Tip } from '../components/ui';
-import { alerts, pjpVolumes, monthlyTrend, actionData, dailyData, errorRows, mccData, heatmapData, pjpList, activityLog } from '../store/data';
-import { useAuthStore } from '../store/authStore';
-import api from '../services/api';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { CreditCard, TrendingUp, AlertOctagon } from 'lucide-react';
 
-export default 
-function DashboardPage() {
-  const [dashboardData, setDashboardData] = useState<any>(null);
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6'];
+
+export default function Dashboard({ auth }: { auth: any }) {
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Ambil data dari Backend Node.js (PostgreSQL)
-    fetch("http://localhost:5000/api/dashboard/summary")
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          setDashboardData(res.data);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Gagal terhubung ke PostgreSQL Backend", err);
-        setLoading(false);
-      });
+    fetchData();
   }, []);
 
-  const top5 = Object.entries(pjpVolumes)
-    .map(([name, vals]) => ({ name: name.replace("Bank ", ""), vol: vals[6] }))
-    .sort((a, b) => b.vol - a.vol).slice(0, 5);
+  const fetchData = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/dashboard', {
+        headers: { 'Authorization': `Bearer ${auth.token}` }
+      });
+      setData(res.data);
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600"></div>
+    </div>
+  );
+  if (error) return <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200">Failed to load data: {error}</div>;
+  if (!data) return null;
 
   return (
-    <div className="space-y-5">
-      {alerts.map(a => (
-        <div key={a.id} className={`flex items-start gap-3 px-4 py-3 rounded-lg border text-sm font-sans
-          ${a.level === "danger" ? "bg-red-500/8 border-red-500/25 text-red-300" : "bg-amber-500/8 border-amber-500/25 text-amber-300"}`}>
-          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-          <div className="flex-1 flex items-start gap-2">
-            <span className="font-semibold">[{a.pjp}]</span>
-            <TierBadge tier={a.tier} />
-            <span>{a.msg}</span>
-          </div>
-          <span className="text-sm text-muted-foreground shrink-0">{a.time}</span>
+    <div className="space-y-6">
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
+          <p className="text-sm text-gray-500 mt-1">Track appeal requests and system performance</p>
         </div>
-      ))}
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Appeal Bulan Ini"  value={dashboardData ? dashboardData.totalAppeals.toString() : "912"}  sub="Juli 2026 (s.d. hari ini)" trend="▲ 8.3% vs Jun" color="teal" />
-        <KPICard label="Status Done"       value={dashboardData ? dashboardData.resolved.toString() : "834"}  sub="Tingkat selesai 91.5%"     trend="▲ 2.1%"        color="blue" />
-        <KPICard label="Pending Review"    value={dashboardData ? dashboardData.pending.toString() : "78"}   sub="Dalam antrian"                                    color="amber" />
-        <KPICard label="Anomali Deteksi"   value={dashboardData ? dashboardData.anomalies.toString() : "12"} sub="T1: 7 · T2: 2 · T3: 3"                           color="slate" />
+        <div className="flex gap-2">
+           <button className="px-4 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">Export Report</button>
+           <button className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Refresh Data</button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2">
-          <CardHead title="Tren Volume Appeal 2026" extra={<span className="text-sm text-muted-foreground font-sans">Jan — Jul</span>} />
-          <div className="p-5">
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={monthlyTrend}>
-                <defs>
-                  <linearGradient id="gDone" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#00d4aa" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#00d4aa" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gPend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#f59e0b" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
-                <Tooltip content={<Tip />} />
-                <Area type="monotone" dataKey="done"     stroke="#00d4aa" strokeWidth={2} fill="url(#gDone)" name="Done" />
-                <Area type="monotone" dataKey="pending"  stroke="#f59e0b" strokeWidth={2} fill="url(#gPend)" name="Pending" />
-                <Area type="monotone" dataKey="rejected" stroke="#ef4444" strokeWidth={1.5} fill="none" name="Rejected" />
-              </AreaChart>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Unique MCC (This Month)</h2>
+            <p className="text-3xl font-bold text-gray-900">{data.uniqueMcc || 0}</p>
+            <p className="text-xs text-green-600 mt-2 font-medium flex items-center gap-1">
+              <TrendingUp size={12} /> +12% from last month
+            </p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-full group-hover:scale-110 transition-transform">
+             <CreditCard className="text-blue-600" size={24} />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Volume Forecast (Next Mth)</h2>
+            <p className="text-3xl font-bold text-gray-900">{data.advanced?.forecast?.forecastedNextMonthVolume || 0}</p>
+            <p className="text-xs text-blue-600 mt-2 font-medium">Estimated projection</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-full group-hover:scale-110 transition-transform">
+             <TrendingUp className="text-purple-600" size={24} />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">System Status</h2>
+            <p className={`text-2xl font-bold ${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+              {data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'Anomaly Detected' : 'All Systems Normal'}
+            </p>
+            <p className="text-xs text-gray-500 mt-2 font-medium">Auto-monitoring active</p>
+          </div>
+          <div className={`${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'bg-red-50' : 'bg-emerald-50'} p-4 rounded-full group-hover:scale-110 transition-transform`}>
+             <AlertOctagon className={data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-red-600' : 'text-emerald-600'} size={24} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Charts */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-96 flex flex-col">
+          <h2 className="font-bold text-gray-800 mb-6">Daily Appeal Volume</h2>
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data.volumePerDate}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis dataKey="tanggal" tickFormatter={(str) => str ? str.substring(8, 10) : ''} axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dx={-10} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Line type="monotone" dataKey="volume" stroke="#E32636" strokeWidth={3} dot={{r: 4, fill: '#E32636', strokeWidth: 0}} activeDot={{r: 6, strokeWidth: 0}} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <CardHead title="Distribusi Action" />
-          <div className="p-4">
-            <ResponsiveContainer width="100%" height={160}>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-96 flex flex-col">
+          <h2 className="font-bold text-gray-800 mb-6">PJP Distribution ('Done' Status)</h2>
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={actionData} cx="50%" cy="50%" innerRadius={45} outerRadius={75}
-                  dataKey="value" paddingAngle={2}>
-                  {actionData.map((d, i) => <Cell key={i} fill={d.color} stroke="transparent" />)}
+                <Pie data={data.distributionByPjp} dataKey="count" nameKey="pjp" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5}>
+                  {data.distributionByPjp?.map((_: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="transparent" />
+                  ))}
                 </Pie>
-                <Tooltip content={<Tip />} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="space-y-1.5 mt-3">
-              {actionData.map(d => (
-                <div key={d.name} className="flex items-center justify-between text-sm font-sans">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
-                    <span className="text-muted-foreground">{d.name}</span>
-                  </div>
-                  <span className="text-foreground">{d.value.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
           </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHead title="Top 5 PJP — Juli 2026" />
-          <div className="p-5">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={top5} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                <XAxis type="number" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="name" tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} width={70} />
-                <Tooltip content={<Tip />} />
-                <Bar dataKey="vol" name="Volume" fill="#00d4aa" radius={[0, 3, 3, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card>
-          <CardHead title="Jumlah Proses Per Tanggal" extra={<span className="text-sm text-muted-foreground font-sans">Juli 2026</span>} />
-          <div className="p-5">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 10, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
-                <Tooltip content={<Tip />} />
-                <Bar dataKey="appeal" name="Appeal" fill="#3b82f6" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="done"   name="Done"   fill="#00d4aa" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+        </div>
+        
+        {/* Tier List */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
+           <h2 className="font-bold text-gray-800 mb-6">PJP Tier Classification</h2>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="rounded-lg border border-red-100 bg-red-50/30 overflow-hidden flex flex-col">
+                 <div className="bg-red-100/50 px-4 py-3 border-b border-red-100 flex justify-between items-center">
+                   <h3 className="font-bold text-red-700">Tier 1</h3>
+                   <span className="text-xs font-semibold bg-white text-red-700 px-2 py-1 rounded-full shadow-sm">&gt; 20 volume</span>
+                 </div>
+                 <ul className="p-2 text-sm max-h-60 overflow-y-auto custom-scrollbar flex-1">
+                    {data.advanced?.tiering?.tier1.map((t:any) => (
+                      <li key={t.pjp} className="flex justify-between p-2 hover:bg-white rounded transition-colors">
+                        <span className="font-medium text-gray-700">{t.pjp}</span>
+                        <span className="text-red-600 font-bold">{t.volume}</span>
+                      </li>
+                    ))}
+                    {data.advanced?.tiering?.tier1.length === 0 && <li className="p-4 text-center text-gray-500 italic">No PJP in Tier 1</li>}
+                 </ul>
+              </div>
+              
+              <div className="rounded-lg border border-orange-100 bg-orange-50/30 overflow-hidden flex flex-col">
+                 <div className="bg-orange-100/50 px-4 py-3 border-b border-orange-100 flex justify-between items-center">
+                   <h3 className="font-bold text-orange-700">Tier 2</h3>
+                   <span className="text-xs font-semibold bg-white text-orange-700 px-2 py-1 rounded-full shadow-sm">5-20 volume</span>
+                 </div>
+                 <ul className="p-2 text-sm max-h-60 overflow-y-auto custom-scrollbar flex-1">
+                    {data.advanced?.tiering?.tier2.map((t:any) => (
+                      <li key={t.pjp} className="flex justify-between p-2 hover:bg-white rounded transition-colors">
+                        <span className="font-medium text-gray-700">{t.pjp}</span>
+                        <span className="text-orange-600 font-bold">{t.volume}</span>
+                      </li>
+                    ))}
+                    {data.advanced?.tiering?.tier2.length === 0 && <li className="p-4 text-center text-gray-500 italic">No PJP in Tier 2</li>}
+                 </ul>
+              </div>
+              
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/30 overflow-hidden flex flex-col">
+                 <div className="bg-emerald-100/50 px-4 py-3 border-b border-emerald-100 flex justify-between items-center">
+                   <h3 className="font-bold text-emerald-700">Tier 3</h3>
+                   <span className="text-xs font-semibold bg-white text-emerald-700 px-2 py-1 rounded-full shadow-sm">&lt; 5 volume</span>
+                 </div>
+                 <ul className="p-2 text-sm max-h-60 overflow-y-auto custom-scrollbar flex-1">
+                    {data.advanced?.tiering?.tier3.map((t:any) => (
+                      <li key={t.pjp} className="flex justify-between p-2 hover:bg-white rounded transition-colors">
+                        <span className="font-medium text-gray-700">{t.pjp}</span>
+                        <span className="text-emerald-600 font-bold">{t.volume}</span>
+                      </li>
+                    ))}
+                    {data.advanced?.tiering?.tier3.length === 0 && <li className="p-4 text-center text-gray-500 italic">No PJP in Tier 3</li>}
+                 </ul>
+              </div>
+           </div>
+        </div>
       </div>
     </div>
   );
 }
-

@@ -1,90 +1,71 @@
 -- ==============================================================================
--- DATABASE SCHEMA: Dashboard Analisis Laporan Appeal (Sesuai Excel Operasional)
+-- DATABASE SCHEMA: Dashboard Analisis Laporan Appeal (appealtrack.md)
 -- ==============================================================================
 
--- Drop tabel lama jika sebelumnya sudah ada (opsional, agar bersih)
-DROP TABLE IF EXISTS operasional_harian_detail CASCADE;
-DROP TABLE IF EXISTS operasional_harian_blacklist CASCADE;
-DROP TABLE IF EXISTS operasional_harian_ktpnp CASCADE;
-DROP TABLE IF EXISTS summary_appeal CASCADE;
+DROP TABLE IF EXISTS SCHEDULED_REPORTS CASCADE;
+DROP TABLE IF EXISTS ANOMALIES CASCADE;
+DROP TABLE IF EXISTS IMPORT_LOGS CASCADE;
+DROP TABLE IF EXISTS APPEALS CASCADE;
+DROP TABLE IF EXISTS USERS CASCADE;
 
--- 1. TABEL: Operasional Harian Detail (Eskalasi Data Merchant)
-CREATE TABLE operasional_harian_detail (
-    id SERIAL PRIMARY KEY,
-    no_referensi VARCHAR(100),
-    tanggal DATE NOT NULL,
-    appeal_worker VARCHAR(150),
-    pjp VARCHAR(255) NOT NULL,
-    nama_merchant VARCHAR(255) NOT NULL,
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. USERS
+CREATE TABLE USERS (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL CHECK (role IN ('Admin', 'Manajemen', 'Staff')),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. APPEALS
+CREATE TABLE APPEALS (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    report_date DATE NOT NULL,
+    pjp_name VARCHAR(255) NOT NULL,
+    pjp_tier VARCHAR(50),
     mcc VARCHAR(50),
-    tanggal_respond DATE,
-    rekomendasi_nama_merchant VARCHAR(255),
-    rekomendasi_mcc VARCHAR(50),
-    action VARCHAR(150),
-    bukti_pendukung_1 TEXT,
-    bukti_pendukung_2 TEXT,
-    bukti_pendukung_3 TEXT,
-    bukti_pendukung_4 TEXT,
-    insert_whitelist BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status VARCHAR(150),
+    detail_action TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. TABEL: Operasional Harian Blacklist
-CREATE TABLE operasional_harian_blacklist (
-    id SERIAL PRIMARY KEY,
-    no_referensi VARCHAR(100),
-    tanggal DATE NOT NULL,
-    pjp VARCHAR(255) NOT NULL,
-    nama_merchant VARCHAR(255) NOT NULL,
-    ktp VARCHAR(100),
-    npwp VARCHAR(100),
-    pjp_yang_melaporkan VARCHAR(255),
-    terindikasi_nama_merchant VARCHAR(255),
-    terindikasi_ktp VARCHAR(100),
-    terindikasi_npwp VARCHAR(100),
-    keterangan_delete TEXT,
-    kota VARCHAR(150),
-    kodepos VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Upsert constraint: Assume unique by report_date, pjp_name, and mcc/status combination to prevent duplication.
+-- To keep it simple and robust per ponytail, we will enforce a strict constraint on date, pjp, and mcc.
+ALTER TABLE APPEALS ADD CONSTRAINT unique_appeal_upsert UNIQUE (report_date, pjp_name, mcc);
+
+-- 3. IMPORT_LOGS
+CREATE TABLE IMPORT_LOGS (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
+    source_type VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    rows_processed INT DEFAULT 0,
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. TABEL: Operasional Harian Detail KTP & NPWP (KTPNP)
-CREATE TABLE operasional_harian_ktpnp (
-    id SERIAL PRIMARY KEY,
-    no_referensi VARCHAR(100),
-    tanggal DATE NOT NULL,
-    appeal_worker VARCHAR(150),
-    pjp VARCHAR(255) NOT NULL,
-    nomor_ktp VARCHAR(100),
-    nomor_npwp VARCHAR(100),
-    tanggal_respon DATE,
-    respon_nomor_ktp VARCHAR(100),
-    respon_nomor_npwp VARCHAR(100),
-    action VARCHAR(150),
-    bukti_pendukung_1 TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- 4. ANOMALIES
+CREATE TABLE ANOMALIES (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    appeal_id UUID REFERENCES APPEALS(id) ON DELETE CASCADE,
+    rule_type VARCHAR(150) NOT NULL,
+    description TEXT,
+    is_resolved BOOLEAN DEFAULT FALSE,
+    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. TABEL: Summary Appeal (Untuk keperluan agregasi pencapaian harian)
-CREATE TABLE summary_appeal (
-    id SERIAL PRIMARY KEY,
-    tanggal DATE NOT NULL UNIQUE,
-    total_appeal_affan INT DEFAULT 0,
-    total_appeal_sulthan INT DEFAULT 0,
-    total_appeal_merchant INT DEFAULT 0,
-    selisih_appeal_worker INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- 5. SCHEDULED_REPORTS
+CREATE TABLE SCHEDULED_REPORTS (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    report_type VARCHAR(100) NOT NULL,
+    recipient_emails TEXT NOT NULL,
+    last_sent TIMESTAMP
 );
 
--- ==============================================================================
--- INDEXES FOR PERFORMANCE OPTIMIZATION (Biar Dashboard Node.js Cepat Loading)
--- ==============================================================================
-CREATE INDEX idx_ophariandetail_tanggal ON operasional_harian_detail(tanggal);
-CREATE INDEX idx_ophariandetail_pjp ON operasional_harian_detail(pjp);
-CREATE INDEX idx_opharianblacklist_tanggal ON operasional_harian_blacklist(tanggal);
-CREATE INDEX idx_opharian_ktpnp_tanggal ON operasional_harian_ktpnp(tanggal);
-CREATE INDEX idx_summary_appeal_tanggal ON summary_appeal(tanggal);
+-- Seed default Admin User (password is 'admin123' hashed with bcrypt)
+-- Note: You should change this in production!
+INSERT INTO USERS (email, name, password_hash, role) 
+VALUES ('admin@appealtrack.com', 'System Admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin');
