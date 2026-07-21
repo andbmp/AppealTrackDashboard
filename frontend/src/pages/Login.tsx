@@ -26,9 +26,20 @@ export default function Login({ setAuth }: { setAuth: (auth: any) => void }) {
       
       localStorage.setItem('auth', JSON.stringify(authData));
       setAuth(authData);
-      navigate('/');
+
+      // Redirect otomatis berdasarkan role
+      if (res.data.role === 'Admin') {
+        navigate('/admin');
+      } else if (res.data.role === 'Staff') {
+        navigate('/upload');
+      } else if (res.data.role === 'Manajemen') {
+        navigate('/');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to login');
+      console.error("Detail Error:", err);
+      setError(err.response?.data?.error || err.message || 'Failed to login');
     } finally {
       setLoading(false);
     }

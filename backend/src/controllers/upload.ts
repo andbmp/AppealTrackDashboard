@@ -16,17 +16,66 @@ async function processDetailRow(client: any, row: any) {
       detail_action = EXCLUDED.detail_action,
       created_at = CURRENT_TIMESTAMP;
   `;
+  // Mengatasi ghost rows (baris kosong)
+  if (!row || Object.keys(row).length === 0) return;
+
+  let rawDate = row['Tanggal'] || row['Date'] || row[1];
+  
+  // Handling tipe data tanggal (Excel terkadang mengirim sebagai integer/serial date atau berbagai format string)
+  let parsedDate = rawDate;
+  if (typeof rawDate === 'number') {
+    const jsDate = new Date((rawDate - (25567 + 2)) * 86400 * 1000); 
+    parsedDate = jsDate.toISOString().split('T')[0];
+  } else if (rawDate instanceof Date) {
+    parsedDate = rawDate.toISOString().split('T')[0];
+  } else if (typeof rawDate === 'string') {
+    // Menangani format dd/mm/yyyy atau dd-mm-yyyy
+    const parts = rawDate.split(/[\/\-]/);
+    if (parts.length === 3) {
+      // Asumsi format Indonesia/UK: dd/mm/yyyy -> yyyy-mm-dd
+      if (parts[2].length === 4) {
+        parsedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      } else if (parts[0].length === 4) {
+        // Jika formatnya sudah yyyy-mm-dd
+        parsedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      }
+    }
+  }
+
+  const allValues = Object.values(row).map(String).join(' ').toLowerCase();
+  
+  let detailAction = 'Rekomendasi Nama'; // Default fallback
+  let status = 'Pending';
+  
+  if (allValues.includes('whitelist')) {
+      detailAction = 'Whitelist';
+      status = 'Done';
+  } else if (allValues.includes('reject') || allValues.includes('tolak')) {
+      detailAction = 'Reject';
+      status = 'Rejected';
+  } else if (allValues.includes('mcc')) {
+      detailAction = 'Rekomendasi MCC';
+      status = 'Pending';
+  } else if (allValues.includes('nama') || allValues.includes('rekomendasi')) {
+      detailAction = 'Rekomendasi Nama';
+      status = 'Pending';
+  } else if (allValues.includes('done') || allValues.includes('selesai') || allValues.includes('sesuai')) {
+      status = 'Done';
+      detailAction = 'Whitelist';
+  }
+
   const values = [
-    row['Tanggal'] || row[1],
-    row['PJP'] || row[3],
-    row['Tier'] || 'Tier 3', // Simplified logic for demo
-    row['MCC'] || row[5],
-    row['Action'] || row[9],
-    row['Insert Whitelist'] === 'Yes' ? 'Insert whitelist' : 'Rekomendasi'
+    parsedDate,
+    row['PJP'] || row['pjp'] || row[3] || 'Unknown PJP',
+    row['Tier'] || 'Tier 3', 
+    row['MCC'] || row['mcc'] || row[5] || 'Unknown MCC',
+    status,
+    detailAction
   ];
   
-  if (!values[0] || !values[1] || !values[3]) {
-      throw new Error("Missing mandatory unique fields: Tanggal, PJP, or MCC");
+  // Jika field wajib benar-benar tidak ada meskipun sudah difallback
+  if (!values[0]) {
+      throw new Error("Missing mandatory unique fields: Tanggal tidak valid atau kosong.");
   }
 
   await client.query(query, values);
@@ -42,29 +91,44 @@ export const uploadData = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { sheetsUrl, range } = req.body;
 
+    let rawData: any[][] = [];
+
     if (sheetsUrl) {
       const match = sheetsUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
       if (!match) {
         res.status(400).json({ error: 'Invalid Google Sheets URL' });
         return;
       }
-      const sheetData = await fetchGoogleSheetData(match[1], range || 'Sheet1!A1:Z10000');
-      const headers = sheetData[0];
-      dataToProcess = sheetData.slice(1).map(row => {
-          let obj: any = {};
-          headers.forEach((h: string, i: number) => {
-              obj[h] = row[i];
-          });
-          return obj;
-      });
+      rawData = (await fetchGoogleSheetData(match[1], range || 'Sheet1!A1:Z10000')) || [];
     } else if (req.file) {
       const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      dataToProcess = xlsx.utils.sheet_to_json(sheet);
+      rawData = xlsx.utils.sheet_to_json(sheet, { header: 1 });
     } else {
       res.status(400).json({ error: 'No file or Sheets URL provided' });
       return;
     }
+
+    // Deteksi baris header secara cerdas dan KETAT (menghindari baris judul seperti "DATA MERCHANT DARI PJP")
+    let headerIdx = rawData.findIndex(r => 
+      r.some((cell: any) => {
+        if (typeof cell !== 'string') return false;
+        const lower = cell.toLowerCase().trim();
+        return lower === 'tanggal' || lower === 'pjp' || lower === 'mcc' || lower === 'action' || lower === 'nomor' || lower === 'nama pjp' || lower === 'tanggal pengajuan';
+      })
+    );
+    if (headerIdx === -1) headerIdx = 0; // Fallback
+
+    const headers = rawData[headerIdx] || [];
+    dataToProcess = rawData.slice(headerIdx + 1)
+      .filter(r => r.length > 0 && r.some(c => c)) // Skip baris benar-benar kosong
+      .map(r => {
+        let obj: any = {};
+        headers.forEach((h: string, i: number) => {
+            if (h) obj[h.toString().trim()] = r[i]; 
+        });
+        return obj;
+      });
 
     totalRows = dataToProcess.length;
     await client.query('BEGIN');
@@ -75,6 +139,10 @@ export const uploadData = async (req: AuthRequest, res: Response): Promise<void>
         } catch (err: any) {
             errors.push({ row: i + 2, data: dataToProcess[i], reason: err.message });
         }
+    }
+    if (errors.length > 0) {
+      console.error("DEBUG UPLOAD ERROR (First Row):", errors[0]);
+      require('fs').appendFileSync('error_log.txt', JSON.stringify(errors[0]) + '\n');
     }
 
     // Log to IMPORT_LOGS
