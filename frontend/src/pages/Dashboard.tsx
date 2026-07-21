@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { CreditCard, TrendingUp, AlertOctagon } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, Layers } from 'lucide-react';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6'];
+// Palet warna yang lebih elegan, harmonis, dan modern (Premium Slate & Crimson tones)
+const PIE_COLORS = ['#E32636', '#FCA5A5', '#F87171', '#991B1B', '#FECACA', '#7F1D1D'];
 
 export default function Dashboard({ auth }: { auth: any }) {
   const [data, setData] = useState<any>(null);
@@ -29,147 +30,172 @@ export default function Dashboard({ auth }: { auth: any }) {
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#E32636]"></div>
     </div>
   );
-  if (error) return <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200">Failed to load data: {error}</div>;
+  if (error) return <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200 shadow-sm">Gagal memuat data: {error}</div>;
   if (!data) return null;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex justify-between items-end mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
-          <p className="text-sm text-gray-500 mt-1">Track appeal requests and system performance</p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Executive Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Ringkasan performa appeal pendaftaran merchant PJP</p>
         </div>
-        <div className="flex gap-2">
-           <button className="px-4 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">Export Report</button>
-           <button className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Refresh Data</button>
+        <div className="flex gap-3">
+           <button className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">Export Report</button>
+           <button onClick={fetchData} className="px-4 py-2 bg-[#E32636] text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Refresh Data</button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Unique MCC (This Month)</h2>
-            <p className="text-3xl font-bold text-gray-900">{data.uniqueMcc || 0}</p>
-            <p className="text-xs text-green-600 mt-2 font-medium flex items-center gap-1">
-              <TrendingUp size={12} /> +12% from last month
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC (FR-07)</h2>
+            <p className="text-3xl font-bold text-slate-800">{data.uniqueMcc || 0}</p>
+            <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
+              <TrendingUp size={14} /> Stabil bulan ini
             </p>
           </div>
-          <div className="bg-blue-50 p-4 rounded-full group-hover:scale-110 transition-transform">
-             <CreditCard className="text-blue-600" size={24} />
+          <div className="bg-slate-50 p-4 rounded-full group-hover:bg-slate-100 transition-colors">
+             <CreditCard className="text-slate-600" size={24} />
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Volume Forecast (Next Mth)</h2>
-            <p className="text-3xl font-bold text-gray-900">{data.advanced?.forecast?.forecastedNextMonthVolume || 0}</p>
-            <p className="text-xs text-blue-600 mt-2 font-medium">Estimated projection</p>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Proyeksi Bulan Depan</h2>
+            <p className="text-3xl font-bold text-slate-800">{data.advanced?.forecast?.forecastedNextMonthVolume || 0}</p>
+            <p className="text-xs text-slate-500 mt-2 font-medium">Estimasi volume appeal</p>
           </div>
-          <div className="bg-purple-50 p-4 rounded-full group-hover:scale-110 transition-transform">
-             <TrendingUp className="text-purple-600" size={24} />
+          <div className="bg-blue-50 p-4 rounded-full group-hover:bg-blue-100 transition-colors">
+             <TrendingUp className="text-blue-600" size={24} />
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between group hover:shadow-md transition-shadow">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">System Status</h2>
-            <p className={`text-2xl font-bold ${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-              {data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'Anomaly Detected' : 'All Systems Normal'}
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Status Sistem & Anomali</h2>
+            <p className={`text-xl font-bold ${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-[#E32636]' : 'text-emerald-600'}`}>
+              {data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'Deteksi Anomali!' : 'Normal & Terkendali'}
             </p>
-            <p className="text-xs text-gray-500 mt-2 font-medium">Auto-monitoring active</p>
+            <p className="text-xs text-slate-500 mt-2 font-medium">Pemantauan otomatis aktif</p>
           </div>
-          <div className={`${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'bg-red-50' : 'bg-emerald-50'} p-4 rounded-full group-hover:scale-110 transition-transform`}>
-             <AlertOctagon className={data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-red-600' : 'text-emerald-600'} size={24} />
+          <div className={`${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'bg-red-50' : 'bg-emerald-50'} p-4 rounded-full transition-colors`}>
+             <AlertOctagon className={data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-[#E32636]' : 'text-emerald-600'} size={24} />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Charts */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-96 flex flex-col">
-          <h2 className="font-bold text-gray-800 mb-6">Daily Appeal Volume</h2>
+        {/* FR-11: Grafik Batang Jumlah Proses Per Tanggal */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
+          <div className="flex items-center gap-2 mb-6">
+             <BarChart3 className="text-slate-400" size={20} />
+             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian (FR-11)</h2>
+          </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.volumePerDate}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="tanggal" tickFormatter={(str) => str ? str.substring(8, 10) : ''} axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dx={-10} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Line type="monotone" dataKey="volume" stroke="#E32636" strokeWidth={3} dot={{r: 4, fill: '#E32636', strokeWidth: 0}} activeDot={{r: 6, strokeWidth: 0}} />
-              </LineChart>
+              <BarChart data={data.volumePerDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="tanggal" tickFormatter={(str) => str ? str.substring(8, 10) : ''} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+                />
+                <Bar dataKey="volume" fill="#E32636" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-96 flex flex-col">
-          <h2 className="font-bold text-gray-800 mb-6">PJP Distribution ('Done' Status)</h2>
+        {/* FR-08: Grafik Statistik Per PJP (Status Done) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
+          <div className="flex items-center gap-2 mb-6">
+             <PieIcon className="text-slate-400" size={20} />
+             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done' (FR-08)</h2>
+          </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={data.distributionByPjp} dataKey="count" nameKey="pjp" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5}>
+                <Pie 
+                  data={data.distributionByPjp} 
+                  dataKey="count" 
+                  nameKey="pjp" 
+                  cx="50%" cy="50%" 
+                  innerRadius={70} 
+                  outerRadius={100} 
+                  paddingAngle={2}
+                >
                   {data.distributionByPjp?.map((_: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="transparent" />
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="transparent" />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
         
-        {/* Tier List */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
-           <h2 className="font-bold text-gray-800 mb-6">PJP Tier Classification</h2>
+        {/* Tiering List - Dirapihkan dengan desain minimalis elegan */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
+           <div className="flex items-center gap-2 mb-6">
+              <Layers className="text-slate-400" size={20} />
+              <h2 className="font-bold text-slate-800 text-lg">Klasifikasi Tier PJP Terkini</h2>
+           </div>
+           
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="rounded-lg border border-red-100 bg-red-50/30 overflow-hidden flex flex-col">
-                 <div className="bg-red-100/50 px-4 py-3 border-b border-red-100 flex justify-between items-center">
-                   <h3 className="font-bold text-red-700">Tier 1</h3>
-                   <span className="text-xs font-semibold bg-white text-red-700 px-2 py-1 rounded-full shadow-sm">&gt; 20 volume</span>
+              {/* Tier 1 */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden flex flex-col">
+                 <div className="bg-white px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+                   <h3 className="font-bold text-slate-800">Tier 1</h3>
+                   <span className="text-[10px] font-bold tracking-wider uppercase bg-slate-800 text-white px-2.5 py-1 rounded-full">&gt; 20 Volume</span>
                  </div>
-                 <ul className="p-2 text-sm max-h-60 overflow-y-auto custom-scrollbar flex-1">
+                 <ul className="p-3 text-sm max-h-64 overflow-y-auto custom-scrollbar flex-1 space-y-1">
                     {data.advanced?.tiering?.tier1.map((t:any) => (
-                      <li key={t.pjp} className="flex justify-between p-2 hover:bg-white rounded transition-colors">
-                        <span className="font-medium text-gray-700">{t.pjp}</span>
-                        <span className="text-red-600 font-bold">{t.volume}</span>
+                      <li key={t.pjp} className="flex justify-between items-center p-2.5 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200 hover:shadow-sm">
+                        <span className="font-medium text-slate-700 truncate pr-2">{t.pjp}</span>
+                        <span className="text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs">{t.volume}</span>
                       </li>
                     ))}
-                    {data.advanced?.tiering?.tier1.length === 0 && <li className="p-4 text-center text-gray-500 italic">No PJP in Tier 1</li>}
+                    {data.advanced?.tiering?.tier1.length === 0 && <li className="p-4 text-center text-slate-400 italic text-xs">Belum ada PJP</li>}
                  </ul>
               </div>
               
-              <div className="rounded-lg border border-orange-100 bg-orange-50/30 overflow-hidden flex flex-col">
-                 <div className="bg-orange-100/50 px-4 py-3 border-b border-orange-100 flex justify-between items-center">
-                   <h3 className="font-bold text-orange-700">Tier 2</h3>
-                   <span className="text-xs font-semibold bg-white text-orange-700 px-2 py-1 rounded-full shadow-sm">5-20 volume</span>
+              {/* Tier 2 */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden flex flex-col">
+                 <div className="bg-white px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+                   <h3 className="font-bold text-slate-800">Tier 2</h3>
+                   <span className="text-[10px] font-bold tracking-wider uppercase bg-slate-500 text-white px-2.5 py-1 rounded-full">5 - 20 Volume</span>
                  </div>
-                 <ul className="p-2 text-sm max-h-60 overflow-y-auto custom-scrollbar flex-1">
+                 <ul className="p-3 text-sm max-h-64 overflow-y-auto custom-scrollbar flex-1 space-y-1">
                     {data.advanced?.tiering?.tier2.map((t:any) => (
-                      <li key={t.pjp} className="flex justify-between p-2 hover:bg-white rounded transition-colors">
-                        <span className="font-medium text-gray-700">{t.pjp}</span>
-                        <span className="text-orange-600 font-bold">{t.volume}</span>
+                      <li key={t.pjp} className="flex justify-between items-center p-2.5 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200 hover:shadow-sm">
+                        <span className="font-medium text-slate-700 truncate pr-2">{t.pjp}</span>
+                        <span className="text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs">{t.volume}</span>
                       </li>
                     ))}
-                    {data.advanced?.tiering?.tier2.length === 0 && <li className="p-4 text-center text-gray-500 italic">No PJP in Tier 2</li>}
+                    {data.advanced?.tiering?.tier2.length === 0 && <li className="p-4 text-center text-slate-400 italic text-xs">Belum ada PJP</li>}
                  </ul>
               </div>
               
-              <div className="rounded-lg border border-emerald-100 bg-emerald-50/30 overflow-hidden flex flex-col">
-                 <div className="bg-emerald-100/50 px-4 py-3 border-b border-emerald-100 flex justify-between items-center">
-                   <h3 className="font-bold text-emerald-700">Tier 3</h3>
-                   <span className="text-xs font-semibold bg-white text-emerald-700 px-2 py-1 rounded-full shadow-sm">&lt; 5 volume</span>
+              {/* Tier 3 */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden flex flex-col">
+                 <div className="bg-white px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+                   <h3 className="font-bold text-slate-800">Tier 3</h3>
+                   <span className="text-[10px] font-bold tracking-wider uppercase bg-slate-300 text-slate-700 px-2.5 py-1 rounded-full">&lt; 5 Volume</span>
                  </div>
-                 <ul className="p-2 text-sm max-h-60 overflow-y-auto custom-scrollbar flex-1">
+                 <ul className="p-3 text-sm max-h-64 overflow-y-auto custom-scrollbar flex-1 space-y-1">
                     {data.advanced?.tiering?.tier3.map((t:any) => (
-                      <li key={t.pjp} className="flex justify-between p-2 hover:bg-white rounded transition-colors">
-                        <span className="font-medium text-gray-700">{t.pjp}</span>
-                        <span className="text-emerald-600 font-bold">{t.volume}</span>
+                      <li key={t.pjp} className="flex justify-between items-center p-2.5 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200 hover:shadow-sm">
+                        <span className="font-medium text-slate-700 truncate pr-2">{t.pjp}</span>
+                        <span className="text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs">{t.volume}</span>
                       </li>
                     ))}
-                    {data.advanced?.tiering?.tier3.length === 0 && <li className="p-4 text-center text-gray-500 italic">No PJP in Tier 3</li>}
+                    {data.advanced?.tiering?.tier3.length === 0 && <li className="p-4 text-center text-slate-400 italic text-xs">Belum ada PJP</li>}
                  </ul>
               </div>
            </div>

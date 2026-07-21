@@ -1,14 +1,13 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
 
 export function TierBadge({ tier }: { tier: number }) {
   const cfg = {
-    1: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-    2: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-    3: "bg-slate-500/15 text-slate-400 border border-slate-500/30",
+    1: "bg-[#E32636]/10 text-[#E32636] border border-[#E32636]/20",
+    2: "bg-orange-500/10 text-orange-600 border border-orange-500/20",
+    3: "bg-slate-500/10 text-slate-600 border border-slate-500/20",
   }[tier]!;
   return (
-    <span className={`px-2 py-0.5 text-sm font-sans rounded ${cfg}`}>
+    <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider ${cfg}`}>
       Tier {tier}
     </span>
   );
@@ -16,42 +15,42 @@ export function TierBadge({ tier }: { tier: number }) {
 
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, [string, string]> = {
-    success: ["bg-emerald-500/15 text-emerald-400", "Berhasil"],
-    partial: ["bg-amber-500/15 text-amber-400",   "Parsial"],
-    warning: ["bg-amber-500/15 text-amber-400",   "Peringatan"],
-    error:   ["bg-red-500/15 text-red-400",        "Error"],
+    success: ["bg-emerald-500/10 text-emerald-600 border border-emerald-500/20", "Berhasil"],
+    partial: ["bg-amber-500/10 text-amber-600 border border-amber-500/20",   "Parsial"],
+    warning: ["bg-amber-500/10 text-amber-600 border border-amber-500/20",   "Peringatan"],
+    error:   ["bg-[#E32636]/10 text-[#E32636] border border-[#E32636]/20",   "Error"],
   };
-  const [cls, label] = map[status] ?? ["bg-slate-500/15 text-slate-400", status];
-  return <span className={`px-2 py-0.5 text-sm font-sans rounded ${cls}`}>{label}</span>;
+  const [cls, label] = map[status.toLowerCase()] ?? ["bg-slate-500/10 text-slate-600 border border-slate-500/20", status];
+  return <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider ${cls}`}>{label}</span>;
 }
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`bg-card border border-border rounded-lg ${className}`}>{children}</div>;
+  return <div className={`bg-white border border-slate-100 shadow-sm rounded-xl overflow-hidden ${className}`}>{children}</div>;
 }
 
 export function CardHead({ title, extra }: { title: string; extra?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-      <span className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">{title}</span>
+    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+      <h2 className="text-sm font-bold text-slate-800 tracking-wide">{title}</h2>
       {extra}
     </div>
   );
 }
 
-export function KPICard({ label, value, sub, trend, color = "teal" }: {
+export function KPICard({ label, value, sub, trend, color = "red" }: {
   label: string; value: string; sub: string; trend?: string; color?: string;
 }) {
   const c: Record<string, string> = {
-    teal: "text-[#00d4aa]", blue: "text-blue-400",
-    amber: "text-amber-400", slate: "text-slate-400",
+    red: "text-[#E32636]", blue: "text-blue-600",
+    amber: "text-amber-500", slate: "text-slate-700", emerald: "text-emerald-600"
   };
   return (
-    <Card className="p-5">
-      <div className="text-sm text-muted-foreground uppercase tracking-widest mb-2 font-sans">{label}</div>
-      <div className={`text-3xl font-bold font-sans ${c[color]}`}>{value}</div>
+    <Card className="p-6 hover:shadow-md hover:border-slate-200 transition-all">
+      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{label}</div>
+      <div className={`text-3xl font-bold ${c[color]}`}>{value}</div>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-sm text-muted-foreground font-sans">{sub}</span>
-        {trend && <span className="text-sm font-sans text-emerald-400">{trend}</span>}
+        <span className="text-xs font-medium text-slate-500">{sub}</span>
+        {trend && <span className="text-xs font-bold text-emerald-600">{trend}</span>}
       </div>
     </Card>
   );
@@ -60,12 +59,12 @@ export function KPICard({ label, value, sub, trend, color = "teal" }: {
 export const Tip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#0f1929] border border-[rgba(255,255,255,0.12)] rounded px-3 py-2 text-sm font-sans shadow-xl z-50 relative">
-      <div className="text-slate-400 mb-1.5">{label}</div>
+    <div className="bg-white border border-slate-200 rounded-lg p-3 text-sm shadow-lg z-50 relative">
+      <div className="text-slate-500 font-semibold mb-2 border-b border-slate-100 pb-1">{label}</div>
       {payload.map((p, i) => (
-        <div key={i} className="flex justify-between gap-4" style={{ color: p.color }}>
-          <span>{p.name}</span>
-          <span className="font-semibold">{p.value.toLocaleString()}</span>
+        <div key={i} className="flex justify-between gap-6" style={{ color: p.color === '#00d4aa' ? '#E32636' : p.color }}>
+          <span className="font-medium">{p.name}</span>
+          <span className="font-bold">{p.value.toLocaleString()}</span>
         </div>
       ))}
     </div>

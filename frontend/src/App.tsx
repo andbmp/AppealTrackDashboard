@@ -18,7 +18,8 @@ import {
   Search, 
   User, 
   LogOut,
-  ShieldAlert
+  ShieldAlert,
+  BarChart2
 } from 'lucide-react';
 
 function AuthGuard({ children, auth, allowedRoles }: { children: React.ReactNode, auth: any, allowedRoles: string[] }) {
@@ -65,7 +66,7 @@ function DashboardLayout({ auth, setAuth, children }: { auth: any, setAuth: any,
           {['Admin', 'Staff'].includes(auth.role) && (
             <SidebarItem icon={UploadIcon} label="Upload Data" to="/upload" active={location.pathname === '/upload'} />
           )}
-          <SidebarItem icon={AlertTriangle} label="Anomaly Detection" to="/analytics" active={location.pathname === '/analytics'} />
+          <SidebarItem icon={BarChart2} label="Analisis Data & Statistik" to="/analytics" active={location.pathname === '/analytics'} />
           <SidebarItem icon={Trophy} label="Ranking" to="/ranking" active={location.pathname === '/ranking'} />
           <SidebarItem icon={List} label="Log Aktivitas" to="/log" active={location.pathname === '/log'} />
           {auth.role === 'Admin' && (

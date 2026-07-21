@@ -65,7 +65,6 @@ CREATE TABLE SCHEDULED_REPORTS (
     last_sent TIMESTAMP
 );
 
--- Seed default Admin User (password is 'admin123' hashed with bcrypt)
--- Note: You should change this in production!
+-- Seed default Admin User (password is 'admin' hashed with bcrypt)
 INSERT INTO USERS (email, name, password_hash, role) 
-VALUES ('admin@appealtrack.com', 'System Admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin');
+VALUES ('admin@gmail.com', 'System Admin', '$2b$10$xBdiVTTbjDluwACC0XohKuvfnJKl9tFi8x.Lhvzs264kn95qvp0RK', 'Admin');
