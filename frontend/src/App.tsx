@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Analytics from './pages/Analytics';
 import Ranking from './pages/Ranking';
 import LogAktivitas from './pages/LogAktivitas';
@@ -139,6 +140,7 @@ export default function App() {
       <DashboardLayout auth={auth} setAuth={setAuth}>
         <Routes>
           <Route path="/login" element={<Login setAuth={setAuth} />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<AuthGuard auth={auth} allowedRoles={['Admin', 'Manajemen', 'Staff']}><Dashboard auth={auth} /></AuthGuard>} />
           <Route path="/upload" element={<AuthGuard auth={auth} allowedRoles={['Admin', 'Staff']}><Upload auth={auth} /></AuthGuard>} />
           <Route path="/analytics" element={<AuthGuard auth={auth} allowedRoles={['Admin', 'Manajemen', 'Staff']}><Analytics auth={auth} /></AuthGuard>} />

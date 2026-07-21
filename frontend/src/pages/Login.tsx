@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 
 export default function Login({ setAuth }: { setAuth: (auth: any) => void }) {
@@ -104,6 +104,12 @@ export default function Login({ setAuth }: { setAuth: (auth: any) => void }) {
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
+          
+          <div className="text-center mt-6">
+            <p className="text-sm text-gray-600">
+              Don't have an account? <Link to="/register" className="text-red-600 font-semibold hover:underline">Create Account</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
