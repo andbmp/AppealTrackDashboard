@@ -27,7 +27,7 @@ export default function SettingsPage({ role }: any) {
   return (
     <div className="space-y-5 max-w-2xl">
       <Card className="p-6 space-y-5">
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Sumber Data (FR-01 · FR-03)</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Sumber Data</h3>
         <div>
           <label className="block text-sm text-muted-foreground mb-2 font-sans uppercase tracking-widest">Path / URL Sumber Data Default</label>
           <input defaultValue="https://docs.google.com/spreadsheets/d/1aBcDeFgHiJkL..."
@@ -47,7 +47,7 @@ export default function SettingsPage({ role }: any) {
       </Card>
 
       <Card className="p-6 space-y-5">
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Notifikasi & Pelaporan (FR-02 · FR-05)</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Notifikasi & Pelaporan</h3>
         <div>
           <label className="block text-sm text-muted-foreground mb-2 font-sans uppercase tracking-widest">Email Penerima Laporan</label>
           <textarea rows={3} value={emailList} onChange={e => setEmailList(e.target.value)}

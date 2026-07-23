@@ -29,7 +29,7 @@ function AnalyticsPage() {
     <div className="space-y-6">
       {/* MCC Chart */}
       <Card>
-        <CardHead title="Jumlah MCC Diajukan Appeal (FR-07)"
+        <CardHead title="Jumlah MCC Diajukan Appeal"
           extra={
             <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
               {(["harian", "mingguan", "bulanan"] as const).map(w => (
@@ -91,7 +91,7 @@ function AnalyticsPage() {
 
       {/* Heatmap */}
       <Card>
-        <CardHead title="Heatmap Distribusi — Hari × Minggu (FR-Adv)" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">Juli 2026</span>} />
+        <CardHead title="Heatmap Distribusi — Hari × Minggu" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">Juli 2026</span>} />
         <div className="p-6 overflow-x-auto">
           <table className="w-full text-sm min-w-[380px]">
             <thead>
@@ -130,7 +130,7 @@ function AnalyticsPage() {
       {/* Action Ratio */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHead title="Rasio Action Per PJP (FR-Adv)" />
+          <CardHead title="Rasio Action Per PJP" />
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -154,7 +154,7 @@ function AnalyticsPage() {
         </Card>
         
         <Card>
-          <CardHead title="Tren Tahunan — Perbandingan Volume Per Bulan (FR-10)" />
+          <CardHead title="Tren Tahunan — Perbandingan Volume Per Bulan" />
           <div className="p-6">
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={dashboardData?.monthlyTrend || monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

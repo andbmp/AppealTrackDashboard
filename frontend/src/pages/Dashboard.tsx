@@ -53,7 +53,7 @@ export default function Dashboard({ auth }: { auth: any }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC (FR-07)</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC</h2>
             <p className="text-3xl font-bold text-slate-800">{data.uniqueMcc || 0}</p>
             <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
               <TrendingUp size={14} /> Stabil bulan ini
@@ -94,7 +94,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
           <div className="flex items-center gap-2 mb-6">
              <BarChart3 className="text-slate-400" size={20} />
-             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian (FR-11)</h2>
+             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian</h2>
           </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -116,7 +116,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
           <div className="flex items-center gap-2 mb-6">
              <PieIcon className="text-slate-400" size={20} />
-             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done' (FR-08)</h2>
+             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done'</h2>
           </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">

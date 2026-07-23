@@ -104,7 +104,9 @@ export default function Login({ setAuth }: { setAuth: (auth: any) => void }) {
                 <input type="checkbox" className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500" />
                 <span className="text-gray-600 font-medium group-hover:text-gray-800 transition-colors">Remember Me</span>
               </label>
-              <a href="#" className="text-red-600 font-semibold hover:text-red-700 hover:underline transition-colors">Forgot Password?</a>
+              <span className="text-gray-400 font-medium text-xs sm:text-sm cursor-help" title="Silakan hubungi tim Administrator untuk mereset password Anda.">
+                Lupa Password?
+              </span>
             </div>
             
             <button 

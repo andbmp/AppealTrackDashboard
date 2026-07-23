@@ -25,7 +25,7 @@ function RankingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-        <p className="text-sm font-bold text-slate-600 tracking-wide">Top 10 PJP berdasarkan volume appeal tertinggi (FR-09)</p>
+        <p className="text-sm font-bold text-slate-600 tracking-wide">Top 10 PJP berdasarkan volume appeal tertinggi</p>
         <select value={selectedMonth} onChange={e => setSelectedMonth(+e.target.value)}
           className="bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#E32636]/20 focus:border-[#E32636] transition-all cursor-pointer">
           {MONTH_LABELS.map((m, i) => <option key={i} value={i}>{m}</option>)}
