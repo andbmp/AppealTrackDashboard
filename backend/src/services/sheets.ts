@@ -10,9 +10,17 @@ export async function fetchGoogleSheetData(spreadsheetId: string, range: string)
   }
 
   const sheets = google.sheets({ version: 'v4', auth: apiKey });
+  
+  // Ambil metadata spreadsheet untuk mendapatkan nama sheet pertama secara dinamis
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const firstSheetName = meta.data.sheets?.[0]?.properties?.title || 'Sheet1';
+  
+  // Gunakan nama sheet pertama tanpa batasan baris untuk mengambil SEMUA data
+  // Kita kembalikan ke FORMATTED_VALUE agar selalu mendapatkan teks yang akan di-parse oleh logika pintar MM/DD/YYYY kita
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range,
+    range: firstSheetName,
+    valueRenderOption: 'FORMATTED_VALUE',
   });
 
   return response.data.values;
