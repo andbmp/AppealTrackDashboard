@@ -40,8 +40,7 @@ CREATE TABLE APPEALS (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Upsert constraint: Assume unique by report_date, pjp_name, and mcc/status combination to prevent duplication.
--- To keep it simple and robust per ponytail, we will enforce a strict constraint on date, pjp, and mcc.
+
 ALTER TABLE APPEALS ADD CONSTRAINT unique_appeal_upsert UNIQUE (report_date, pjp_name, mcc);
 
 -- 3. IMPORT_LOGS
