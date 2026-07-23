@@ -24,16 +24,27 @@ function UploadPage() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:5000/api/upload/excel", {
-        method: "POST",
-        body: formData,
-      });
-      const result = await response.json();
-      setUploadResult(result);
+      const response = await api.post("/upload", formData);
+      setUploadResult({ success: true, ...response.data });
       setUploadState("done");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Upload error", err);
-      setUploadResult({ success: false, message: "Gagal terhubung ke backend." });
+      setUploadResult({ success: false, message: err.response?.data?.error || "Gagal memproses file." });
+      setUploadState("done");
+    }
+  };
+
+  const doUploadSheets = async () => {
+    if (!sheetsUrl) return;
+    setUploadState("processing");
+    
+    try {
+      const response = await api.post("/upload", { sheetsUrl });
+      setUploadResult({ success: true, ...response.data });
+      setUploadState("done");
+    } catch (err: any) {
+      console.error("Upload error", err);
+      setUploadResult({ success: false, message: err.response?.data?.error || "Gagal menarik data dari Google Sheets." });
       setUploadState("done");
     }
   };
@@ -90,8 +101,9 @@ function UploadPage() {
                   <input value={sheetsUrl} onChange={e => setSheetsUrl(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/..."
                     className="flex-1 bg-muted border border-border rounded px-3 py-2 text-base font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#00d4aa] transition-colors" />
-                  <button onClick={() => alert("Simulasi integrasi Google Sheets. Gunakan Excel untuk tes DB nyata.")}
-                    className="px-4 py-2 bg-[#00d4aa] text-[#070d1a] text-base font-semibold rounded hover:bg-[#00c49a] transition-colors">
+                  <button onClick={doUploadSheets}
+                    disabled={!sheetsUrl || uploadState === "processing"}
+                    className="px-4 py-2 bg-[#00d4aa] text-[#070d1a] text-base font-semibold rounded hover:bg-[#00c49a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     Tarik Data
                   </button>
                 </div>
