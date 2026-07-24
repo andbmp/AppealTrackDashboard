@@ -10,8 +10,13 @@ export default function Dashboard({ auth }: { auth: any }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(() => localStorage.getItem('dashboard_start') || '');
+  const [endDate, setEndDate] = useState(() => localStorage.getItem('dashboard_end') || '');
+
+  useEffect(() => {
+    localStorage.setItem('dashboard_start', startDate);
+    localStorage.setItem('dashboard_end', endDate);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchData();
@@ -63,13 +68,28 @@ export default function Dashboard({ auth }: { auth: any }) {
            </div>
            <div className="flex gap-2">
              <button onClick={fetchData} className="px-4 py-2 bg-[#E32636] text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Filter</button>
-             <button className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">Export</button>
+             {(startDate || endDate) && (
+               <button onClick={() => { setStartDate(''); setEndDate(''); setTimeout(fetchData, 100); }} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors shadow-sm">Reset</button>
+             )}
            </div>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
+          <div>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Appeal {startDate && endDate ? '' : '(Bulan Ini)'}</h2>
+            <p className="text-3xl font-bold text-slate-800">{data.totalAppeal || 0}</p>
+            <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
+              <TrendingUp size={14} /> Laporan diproses
+            </p>
+          </div>
+          <div className="bg-emerald-50 p-4 rounded-full group-hover:bg-emerald-100 transition-colors">
+             <Layers className="text-emerald-600" size={24} />
+          </div>
+        </div>
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC {startDate && endDate ? '' : '(Bulan Ini)'}</h2>
@@ -80,30 +100,6 @@ export default function Dashboard({ auth }: { auth: any }) {
           </div>
           <div className="bg-slate-50 p-4 rounded-full group-hover:bg-slate-100 transition-colors">
              <CreditCard className="text-slate-600" size={24} />
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
-          <div>
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Proyeksi Bulan Depan</h2>
-            <p className="text-3xl font-bold text-slate-800">{data.advanced?.forecast?.forecastedNextMonthVolume || 0}</p>
-            <p className="text-xs text-slate-500 mt-2 font-medium">Estimasi volume appeal</p>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-full group-hover:bg-blue-100 transition-colors">
-             <TrendingUp className="text-blue-600" size={24} />
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
-          <div>
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Status Sistem & Anomali</h2>
-            <p className={`text-xl font-bold ${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-[#E32636]' : 'text-emerald-600'}`}>
-              {data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'Deteksi Anomali!' : 'Normal & Terkendali'}
-            </p>
-            <p className="text-xs text-slate-500 mt-2 font-medium">Pemantauan otomatis aktif</p>
-          </div>
-          <div className={`${data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'bg-red-50' : 'bg-emerald-50'} p-4 rounded-full transition-colors`}>
-             <AlertOctagon className={data.advanced?.anomalies?.anomaliesDetected?.length > 0 ? 'text-[#E32636]' : 'text-emerald-600'} size={24} />
           </div>
         </div>
       </div>
@@ -163,7 +159,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
            <div className="flex items-center gap-2 mb-6">
               <Layers className="text-slate-400" size={20} />
-              <h2 className="font-bold text-slate-800 text-lg">Klasifikasi Tier PJP Terkini {startDate && endDate ? '' : '(30 Hari)'}</h2>
+              <h2 className="font-bold text-slate-800 text-lg">Klasifikasi Tier PJP (All Time)</h2>
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
