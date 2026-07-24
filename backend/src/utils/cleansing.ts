@@ -59,7 +59,12 @@ export const cleanseAndTransform = (row: any): CleanedData | null => {
     mcc = String(rawMcc).trim().toUpperCase();
   }
 
-  // 4. TIERING
+  // 4. MERCHANT NAME & TIERING
+  let merchant_name = 'UNKNOWN';
+  if (row['Nama Merchant'] && String(row['Nama Merchant']).trim() !== '') {
+    merchant_name = String(row['Nama Merchant']).trim();
+  }
+
   let pjp_tier = row['Tier'] ? String(row['Tier']).trim() : 'Tier 3';
 
   // 5. ACTION & STATUS (Deteksi Keyword)
@@ -89,6 +94,7 @@ export const cleanseAndTransform = (row: any): CleanedData | null => {
     pjp_name,
     pjp_tier,
     mcc,
+    merchant_name,
     status,
     detail_action
   };

@@ -7,6 +7,7 @@ export async function getTiering() {
       SELECT pjp_name as pjp, COUNT(*) as volume 
       FROM APPEALS 
       GROUP BY pjp_name
+      ORDER BY volume DESC
     `);
     
     const tier1: any[] = [];
