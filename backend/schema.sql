@@ -35,13 +35,14 @@ CREATE TABLE APPEALS (
     pjp_name VARCHAR(255) NOT NULL,
     pjp_tier VARCHAR(50),
     mcc VARCHAR(50),
+    merchant_name VARCHAR(255),
     status VARCHAR(150),
     detail_action TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
-ALTER TABLE APPEALS ADD CONSTRAINT unique_appeal_upsert UNIQUE (report_date, pjp_name, mcc);
+ALTER TABLE APPEALS ADD CONSTRAINT unique_appeal_upsert UNIQUE (report_date, pjp_name, mcc, merchant_name);
 
 -- 3. IMPORT_LOGS
 CREATE TABLE IMPORT_LOGS (

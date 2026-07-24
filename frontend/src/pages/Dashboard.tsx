@@ -10,6 +10,8 @@ export default function Dashboard({ auth }: { auth: any }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -17,7 +19,12 @@ export default function Dashboard({ auth }: { auth: any }) {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/dashboard', {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const res = await axios.get(`http://localhost:5000/api/dashboard?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${auth.token}` }
       });
       setData(res.data);
@@ -41,11 +48,23 @@ export default function Dashboard({ auth }: { auth: any }) {
       <div className="flex justify-between items-end mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Executive Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">Ringkasan performa appeal pendaftaran merchant PJP</p>
+          <p className="text-sm text-slate-500 mt-1 flex items-center">
+            Ringkasan performa appeal pendaftaran merchant PJP
+            <span className="ml-3 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-bold border border-blue-100 uppercase tracking-wider">
+              {startDate && endDate ? `${startDate} s/d ${endDate}` : 'Bulan Ini (30 Hari Terakhir)'}
+            </span>
+          </p>
         </div>
-        <div className="flex gap-3">
-           <button className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">Export Report</button>
-           <button onClick={fetchData} className="px-4 py-2 bg-[#E32636] text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Refresh Data</button>
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+           <div className="flex gap-2 items-center bg-white border border-slate-200 rounded-md p-1 shadow-sm">
+             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="px-2 py-1 text-sm text-slate-700 outline-none bg-transparent" />
+             <span className="text-slate-400 text-sm">s/d</span>
+             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-2 py-1 text-sm text-slate-700 outline-none bg-transparent" />
+           </div>
+           <div className="flex gap-2">
+             <button onClick={fetchData} className="px-4 py-2 bg-[#E32636] text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Filter</button>
+             <button className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">Export</button>
+           </div>
         </div>
       </div>
 
@@ -53,7 +72,7 @@ export default function Dashboard({ auth }: { auth: any }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC {startDate && endDate ? '' : '(Bulan Ini)'}</h2>
             <p className="text-3xl font-bold text-slate-800">{data.uniqueMcc || 0}</p>
             <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
               <TrendingUp size={14} /> Stabil bulan ini
@@ -94,7 +113,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
           <div className="flex items-center gap-2 mb-6">
              <BarChart3 className="text-slate-400" size={20} />
-             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian</h2>
+             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian {startDate && endDate ? '' : '(30 Hari)'}</h2>
           </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -116,7 +135,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
           <div className="flex items-center gap-2 mb-6">
              <PieIcon className="text-slate-400" size={20} />
-             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done'</h2>
+             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done' {startDate && endDate ? '' : '(30 Hari)'}</h2>
           </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -144,7 +163,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
            <div className="flex items-center gap-2 mb-6">
               <Layers className="text-slate-400" size={20} />
-              <h2 className="font-bold text-slate-800 text-lg">Klasifikasi Tier PJP Terkini</h2>
+              <h2 className="font-bold text-slate-800 text-lg">Klasifikasi Tier PJP Terkini {startDate && endDate ? '' : '(30 Hari)'}</h2>
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
