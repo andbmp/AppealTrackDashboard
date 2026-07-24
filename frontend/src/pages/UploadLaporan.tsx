@@ -85,7 +85,7 @@ function UploadPage() {
   };
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="space-y-6 max-w-5xl mx-auto">
       <Card>
         <div className="flex border-b border-gray-200">
           {(["file", "sheets"] as const).map(t => (
@@ -194,70 +194,73 @@ function UploadPage() {
         </div>
       )}
 
-      <Card>
-        <CardHead title="Spesifikasi Kolom Wajib - Eskalasi Data Merchant" />
-        <table className="w-full text-sm font-sans">
-          <thead>
-            <tr className="border-b border-gray-200">
-              {["Kolom Database", "Tipe Data", "Wajib", "Contoh Nilai"].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-sm text-gray-500 uppercase tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["no_referensi",               "String",           "Ya",   "1, 2, 3"],
-              ["tanggal",                    "Date (YYYY-MM-DD)","Ya",   "2026-07-13"],
-              ["appeal_worker",              "String",           "Tidak","Siti Rahayu"],
-              ["pjp",                        "String",           "Ya",   "Bank BCA"],
-              ["nama_merchant",              "String",           "Ya",   "Toko Maju Jaya"],
-              ["mcc",                        "String",           "Tidak","5411"],
-              ["rekomendasi_nama_merchant",  "String",           "Tidak","Toko Maju Jaya Baru"],
-              ["rekomendasi_mcc",            "String",           "Tidak","5412"],
-              ["action",                     "String",           "Tidak","Insert Whitelist"],
-              ["insert_whitelist",           "Boolean",          "Tidak","TRUE / FALSE"],
-            ].map(([col, type, req, ex]) => (
-              <tr key={col} className="border-b border-gray-200/50 hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 text-[#E32636]">{col}</td>
-                <td className="px-4 py-3 text-blue-400">{type}</td>
-                <td className="px-4 py-3"><span className={req === "Ya" ? "text-emerald-400" : "text-gray-500"}>{req}</span></td>
-                <td className="px-4 py-3 text-gray-500">{ex}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-      
-      <Card className="mt-4">
-        <CardHead title="Spesifikasi Kolom Wajib - Merchant Blacklist" />
-        <table className="w-full text-sm font-sans">
-          <thead>
-            <tr className="border-b border-gray-200">
-              {["Kolom Database", "Tipe Data", "Wajib", "Contoh Nilai"].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-sm text-gray-500 uppercase tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["tanggal",                    "Date (YYYY-MM-DD)","Ya",   "2026-07-13"],
-              ["pjp",                        "String",           "Ya",   "Bank BCA"],
-              ["nama_merchant",              "String",           "Ya",   "Toko Penipu"],
-              ["ktp",                        "String",           "Tidak","327123..."],
-              ["npwp",                       "String",           "Tidak","01.234..."],
-              ["terindikasi_nama_merchant",  "String",           "Tidak","Toko Penipu A"],
-              ["keterangan_delete",          "String",           "Tidak","Fraud Indication"],
-            ].map(([col, type, req, ex]) => (
-              <tr key={col} className="border-b border-gray-200/50 hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 text-[#E32636]">{col}</td>
-                <td className="px-4 py-3 text-blue-400">{type}</td>
-                <td className="px-4 py-3"><span className={req === "Ya" ? "text-emerald-400" : "text-gray-500"}>{req}</span></td>
-                <td className="px-4 py-3 text-gray-500">{ex}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      {/* Spesifikasi Kolom Wajib diletakkan di bawah agar lebar dan rapi */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardHead title="Spesifikasi Kolom Wajib - Eskalasi Data Merchant" />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-sans">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  {["Kolom Database", "Tipe Data", "Wajib"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-sm text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["no_referensi",               "String",           "Ya"],
+                  ["tanggal",                    "Date",             "Ya"],
+                  ["pjp",                        "String",           "Ya"],
+                  ["nama_merchant",              "String",           "Ya"],
+                  ["mcc",                        "String",           "Tidak"],
+                  ["rekomendasi_nama_merchant",  "String",           "Tidak"],
+                  ["rekomendasi_mcc",            "String",           "Tidak"],
+                  ["insert_whitelist",           "Boolean",          "Tidak"],
+                ].map(([col, type, req]) => (
+                  <tr key={col} className="border-b border-gray-200/50 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-2 text-[#E32636] font-medium">{col}</td>
+                    <td className="px-4 py-2 text-blue-500">{type}</td>
+                    <td className="px-4 py-2"><span className={req === "Ya" ? "text-emerald-500 font-medium" : "text-gray-400"}>{req}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+        
+        <Card>
+          <CardHead title="Spesifikasi Kolom Wajib - Merchant Blacklist" />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-sans">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  {["Kolom Database", "Tipe Data", "Wajib"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-sm text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["tanggal",                    "Date",             "Ya"],
+                  ["pjp",                        "String",           "Ya"],
+                  ["nama_merchant",              "String",           "Ya"],
+                  ["ktp",                        "String",           "Tidak"],
+                  ["npwp",                       "String",           "Tidak"],
+                  ["terindikasi_nama_merchant",  "String",           "Tidak"],
+                  ["keterangan_delete",          "String",           "Tidak"],
+                ].map(([col, type, req]) => (
+                  <tr key={col} className="border-b border-gray-200/50 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-2 text-[#E32636] font-medium">{col}</td>
+                    <td className="px-4 py-2 text-blue-500">{type}</td>
+                    <td className="px-4 py-2"><span className={req === "Ya" ? "text-emerald-500 font-medium" : "text-gray-400"}>{req}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

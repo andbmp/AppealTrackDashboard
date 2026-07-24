@@ -35,8 +35,9 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       return res.rows.map(r => ({ ...r, count: Number(r.count), appeals: Number(r.appeals), pct: Math.round((Number(r.appeals)/Math.max(1, Number(r.count)))*100) }));
     };
 
-    // Parallelize 14 heavy database/analytics calls to run concurrently
+    // Parallelize 15 heavy database/analytics calls to run concurrently
     const [
+      totalAppealQuery,
       mccQuery,
       pjpQuery,
       volumeQuery,
@@ -52,15 +53,16 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       forecast,
       anomalies
     ] = await Promise.all([
+      client.query(`SELECT COUNT(*) as total_appeal FROM APPEALS ${dateFilter}`, params),
       client.query(`SELECT COUNT(DISTINCT mcc) as total_mcc FROM APPEALS ${dateFilter}`, params),
       client.query(`SELECT pjp_name as pjp, COUNT(*) as count FROM APPEALS ${dateFilter ? dateFilter + " AND " : "WHERE "} status = 'Done' GROUP BY pjp_name`, params),
       client.query(`SELECT report_date as tanggal, COUNT(*) as volume FROM APPEALS ${dateFilter} GROUP BY report_date ORDER BY report_date ASC`, params),
       getMccQuery('1 day'),
       getMccQuery('7 days'),
       getMccQuery('30 days'),
-      client.query(`SELECT EXTRACT(ISODOW FROM report_date) as dow, CEIL(EXTRACT(DAY FROM report_date)/7.0) as week, COUNT(*) as count FROM APPEALS GROUP BY dow, week`),
-      client.query(`SELECT pjp_name as pjp, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%') as rn, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%') as rm, COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%') as wl, COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%') as rj FROM APPEALS GROUP BY pjp_name ORDER BY COUNT(*) DESC LIMIT 10`),
-      client.query(`SELECT TO_CHAR(report_date, 'Mon YYYY') as month, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'Done' OR status = 'done') as done, COUNT(*) FILTER (WHERE status = 'Pending' OR status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'Rejected' OR status = 'rejected') as rejected FROM APPEALS GROUP BY TO_CHAR(report_date, 'Mon YYYY'), EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date) ORDER BY EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date)`),
+      client.query(`SELECT EXTRACT(ISODOW FROM report_date) as dow, CEIL(EXTRACT(DAY FROM report_date)/7.0) as week, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY dow, week`, params),
+      client.query(`SELECT pjp_name as pjp, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%') as rn, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%') as rm, COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%') as wl, COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%') as rj FROM APPEALS ${dateFilter} GROUP BY pjp_name ORDER BY COUNT(*) DESC LIMIT 10`, params),
+      client.query(`SELECT TO_CHAR(report_date, 'Mon YYYY') as month, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'Done' OR status = 'done') as done, COUNT(*) FILTER (WHERE status = 'Pending' OR status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'Rejected' OR status = 'rejected') as rejected FROM APPEALS ${dateFilter} GROUP BY TO_CHAR(report_date, 'Mon YYYY'), EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date) ORDER BY EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date)`, params),
       client.query(`
         SELECT 
           pjp_name as name, 
@@ -103,6 +105,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     }));
 
     res.json({
+      totalAppeal: totalAppealQuery.rows[0].total_appeal,
       uniqueMcc: mccQuery.rows[0].total_mcc,
       distributionByPjp: pjpQuery.rows.map(r => ({ pjp: r.pjp, count: Number(r.count) })),
       volumePerDate: volumeQuery.rows.map(r => ({ tanggal: new Date(r.tanggal).toLocaleDateString('id-ID'), volume: Number(r.volume) })),
