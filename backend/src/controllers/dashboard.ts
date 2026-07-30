@@ -85,10 +85,11 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
           COUNT(*) as vol, 
           COUNT(*) FILTER (WHERE status ILIKE 'done') as done 
         FROM APPEALS 
+        ${dateFilter}
         GROUP BY pjp_name 
         ORDER BY vol DESC 
         LIMIT 10
-      `),
+      `, params),
       client.query(`SELECT id, executed_at, source_type, status, rows_processed FROM IMPORT_LOGS ORDER BY executed_at DESC LIMIT 15`),
       getTiering(),
       getForecast(),
