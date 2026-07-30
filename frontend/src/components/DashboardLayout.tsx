@@ -23,10 +23,7 @@ export function DashboardLayout({ auth, setAuth, children }: { auth: any, setAut
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top Header */}
         <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10 shrink-0">
-          <div className="flex items-center gap-4 bg-gray-100 px-4 py-2 rounded-md w-96 border border-gray-200 focus-within:border-red-400 focus-within:bg-white transition-colors">
-            <Search size={18} className="text-gray-400" />
-            <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none w-full text-sm" />
-          </div>
+          <div className="flex-1"></div>
           
           <div className="flex items-center gap-6">
             <div className="text-sm text-gray-500 font-medium">
