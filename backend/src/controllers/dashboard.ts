@@ -20,11 +20,15 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         : `WHERE a.report_date >= ${anchorDate}::DATE - INTERVAL '${interval}'`;
         
       const res = await client.query(`
+        WITH total_appeals AS (
+          SELECT COUNT(*) as total FROM APPEALS a ${effectiveFilter}
+        )
         SELECT 
           a.mcc, 
           COALESCE(m.description, 'Kategori ' || a.mcc) as label, 
-          COUNT(DISTINCT a.pjp_name) as count, 
-          COUNT(*) as appeals 
+          COUNT(DISTINCT a.merchant_name) as count, 
+          COUNT(*) as appeals,
+          (SELECT total FROM total_appeals) as total_all
         FROM APPEALS a 
         LEFT JOIN master_mcc m ON a.mcc = m.mcc_code 
         ${effectiveFilter}
@@ -32,7 +36,13 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         ORDER BY appeals DESC 
         LIMIT 10
       `, params);
-      return res.rows.map(r => ({ ...r, count: Number(r.count), appeals: Number(r.appeals), pct: Math.round((Number(r.appeals)/Math.max(1, Number(r.count)))*100) }));
+      return res.rows.map(r => ({ 
+        mcc: r.mcc,
+        label: r.label,
+        count: Number(r.count), 
+        appeals: Number(r.appeals), 
+        pct: Math.round((Number(r.appeals)/Math.max(1, Number(r.total_all)))*100) 
+      }));
     };
 
     // Parallelize 15 heavy database/analytics calls to run concurrently
