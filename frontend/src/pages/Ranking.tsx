@@ -7,14 +7,35 @@ import api from '../services/api';
 export default 
 function RankingPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [startDate, setStartDate] = useState(() => localStorage.getItem('dashboard_start') || '');
+  const [endDate, setEndDate] = useState(() => localStorage.getItem('dashboard_end') || '');
+
   useEffect(() => {
-    api.get("/dashboard")
-      .then(res => setDashboardData(res.data))
-      .catch(console.error);
+    localStorage.setItem('dashboard_start', startDate);
+    localStorage.setItem('dashboard_end', endDate);
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
-  const [selectedMonth, setSelectedMonth] = useState(6);
-  const MONTH_LABELS = ["Jan 2026","Feb 2026","Mar 2026","Apr 2026","Mei 2026","Jun 2026","Jul 2026"];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const res = await api.get(`/dashboard?${params.toString()}`);
+      setDashboardData(res.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const ranked = (dashboardData?.top5 || pjpList)
     .map((pjp: any) => ({ ...pjp, vol: pjp.vol || 2 }))
@@ -22,14 +43,38 @@ function RankingPage() {
     .slice(0, 10)
     .map((d: any) => ({ ...d, done: d.done ?? Math.floor(d.vol * 0.88), tier: d.tier || 1, type: d.type || 'Bank' }));
 
+  if (loading) return (
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#E32636]"></div>
+    </div>
+  );
+  if (error) return <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200 shadow-sm">Gagal memuat data: {error}</div>;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-        <p className="text-sm font-bold text-slate-600 tracking-wide">Top 10 PJP berdasarkan volume appeal tertinggi</p>
-        <select value={selectedMonth} onChange={e => setSelectedMonth(+e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#E32636]/20 focus:border-[#E32636] transition-all cursor-pointer">
-          {MONTH_LABELS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-        </select>
+      <div className="flex justify-between items-end mb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Peringkat PJP</h1>
+          <p className="text-sm text-slate-500 mt-1 flex items-center">
+            Top 10 PJP berdasarkan volume appeal tertinggi
+            <span className="ml-3 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-bold border border-blue-100 uppercase tracking-wider">
+              {startDate && endDate ? `${startDate} s/d ${endDate}` : 'Bulan Ini (30 Hari Terakhir)'}
+            </span>
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+           <div className="flex gap-2 items-center bg-white border border-slate-200 rounded-md p-1 shadow-sm">
+             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="px-2 py-1 text-sm text-slate-700 outline-none bg-transparent" />
+             <span className="text-slate-400 text-sm">s/d</span>
+             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-2 py-1 text-sm text-slate-700 outline-none bg-transparent" />
+           </div>
+           <div className="flex gap-2">
+             <button onClick={fetchData} className="px-4 py-2 bg-[#E32636] text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Filter</button>
+             {(startDate || endDate) && (
+               <button onClick={() => { setStartDate(''); setEndDate(''); setTimeout(fetchData, 100); }} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors shadow-sm">Reset</button>
+             )}
+           </div>
+        </div>
       </div>
 
       <Card>

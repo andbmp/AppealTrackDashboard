@@ -86,16 +86,18 @@ function AnalyticsPage() {
       <Card>
         <CardHead title="Jumlah MCC Diajukan Appeal"
           extra={
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-              {(["harian", "mingguan", "bulanan"] as const).map(w => (
-                <button key={w} onClick={() => setMccWindow(w)}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                    mccWindow === w ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-800"
-                  }`}>
-                  {w.charAt(0).toUpperCase() + w.slice(1)}
-                </button>
-              ))}
-            </div>
+            !(startDate && endDate) ? (
+              <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                {(["harian", "mingguan", "bulanan"] as const).map(w => (
+                  <button key={w} onClick={() => setMccWindow(w)}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                      mccWindow === w ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                    }`}>
+                    {w.charAt(0).toUpperCase() + w.slice(1)}
+                  </button>
+                ))}
+              </div>
+            ) : null
           }
         />
         <div className="p-6">
