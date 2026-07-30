@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { AlertTriangle, UploadCloud, RefreshCw, CheckCircle, Download, Search, Shield, Home, BarChart2, Layers, Settings, FileText, Activity, X, Menu, ChevronRight, Bell } from 'lucide-react';
+import { AlertTriangle, UploadCloud, RefreshCw, CheckCircle, XCircle, Download, Search, Shield, Home, BarChart2, Layers, Settings, FileText, Activity, X, Menu, ChevronRight, Bell } from 'lucide-react';
 import { TierBadge, StatusBadge, Card, CardHead, KPICard, Tip } from '../components/ui';
 import { alerts, pjpVolumes, monthlyTrend, actionData, dailyData, errorRows, mccData, heatmapData, pjpList, activityLog } from '../store/data';
 import { useAuthStore } from '../store/authStore';
@@ -68,6 +68,23 @@ function UploadPage() {
       setUploadResult({ success: false, message: err.response?.data?.error || "Gagal menarik data dari Google Sheets." });
       setUploadState("done");
     }
+  };
+
+  const downloadErrorLog = () => {
+    const errors = uploadResult?.errors || errorRows;
+    if (!errors || errors.length === 0) return;
+    
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Baris,Kolom,Alasan Gagal\n"
+      + errors.map((e: any) => `${e.row},${e.col || 'Data'},"${e.reason}"`).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "error_log_upload.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -152,20 +169,24 @@ function UploadPage() {
 
       {uploadState === "done" && (
         <div className="space-y-4">
-          <Card className="p-4 border-emerald-500/25 bg-emerald-500/5">
+          <Card className={`p-4 border ${uploadResult?.successfulRows > 0 ? (uploadResult?.failedRows > 0 ? 'border-amber-500/25 bg-amber-500/5' : 'border-emerald-500/25 bg-emerald-500/5') : 'border-red-500/25 bg-red-500/5'}`}>
             <div className="flex items-center gap-3">
-              <CheckCircle size={18} className="text-emerald-400 shrink-0" />
+              {uploadResult?.successfulRows > 0 ? (
+                uploadResult?.failedRows > 0 ? <AlertTriangle size={18} className="text-amber-500 shrink-0" /> : <CheckCircle size={18} className="text-emerald-400 shrink-0" />
+              ) : (
+                <XCircle size={18} className="text-red-500 shrink-0" />
+              )}
               <div className="flex-1">
                 <div className="text-base font-semibold text-gray-900">
-                  {uploadResult?.success ? "Upload Selesai" : "Upload Gagal"}
+                  {uploadResult?.success ? (uploadResult?.failedRows > 0 ? (uploadResult?.successfulRows > 0 ? "Upload Parsial" : "Upload Ditolak") : "Upload Sukses") : "Upload Gagal"}
                 </div>
                 <div className="text-sm text-gray-500 font-sans mt-0.5">
                   {uploadResult?.success 
-                    ? `${uploadResult.inserted} baris berhasil disimpan · ${uploadResult.errors?.length || 0} baris ditolak · ${uploadResult.fileName}`
+                    ? `${uploadResult.successfulRows || 0} baris berhasil disimpan · ${uploadResult.failedRows || 0} baris ditolak`
                     : uploadResult?.message || "Terjadi kesalahan saat upload."}
                 </div>
               </div>
-              <button className="flex items-center gap-1.5 text-sm text-[#E32636] hover:underline font-sans shrink-0">
+              <button onClick={downloadErrorLog} className="flex items-center gap-1.5 text-sm text-[#E32636] hover:underline font-sans shrink-0">
                 <Download size={12} /> Error Log
               </button>
             </div>

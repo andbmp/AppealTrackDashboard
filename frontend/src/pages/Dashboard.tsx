@@ -6,8 +6,18 @@ import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, L
 // Palet warna yang lebih elegan, harmonis, dan modern (Premium Slate & Crimson tones)
 const PIE_COLORS = ['#E32636', '#FCA5A5', '#F87171', '#991B1B', '#FECACA', '#7F1D1D'];
 
+interface DashboardData {
+  totalAppeal: string | number;
+  uniqueMcc: string | number;
+  mccDistribution: any[];
+  pjpVolume: any[];
+  trend: any[];
+  dailyCount: any[];
+  actionRatio: any[];
+}
+
 export default function Dashboard({ auth }: { auth: any }) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [startDate, setStartDate] = useState(() => localStorage.getItem('dashboard_start') || '');

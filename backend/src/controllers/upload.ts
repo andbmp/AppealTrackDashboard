@@ -79,9 +79,11 @@ export const uploadData = async (req: AuthRequest, res: Response): Promise<void>
         const cleaned = cleanseAndTransform(dataToProcess[i]);
         if (cleaned) {
           cleanedRows.push(cleaned);
+        } else {
+          errors.push({ row: i + headerIdx + 2, data: dataToProcess[i], reason: 'Kolom Wajib (Tanggal/PJP/Action) kosong atau format tidak dikenali' });
         }
       } catch (err: any) {
-        errors.push({ row: i + 2, data: dataToProcess[i], reason: err.message });
+        errors.push({ row: i + headerIdx + 2, data: dataToProcess[i], reason: err.message });
       }
     }
 
