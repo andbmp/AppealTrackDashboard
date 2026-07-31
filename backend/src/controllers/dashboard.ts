@@ -90,7 +90,12 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         ORDER BY vol DESC 
         LIMIT 10
       `, params),
-      client.query(`SELECT id, executed_at, source_type, status, rows_processed FROM IMPORT_LOGS ORDER BY executed_at DESC LIMIT 15`),
+      client.query(`
+        SELECT i.id, i.executed_at, i.source_type, i.status, i.rows_processed, u.name as user_name, u.role as user_role 
+        FROM IMPORT_LOGS i 
+        LEFT JOIN USERS u ON i.user_id = u.id 
+        ORDER BY i.executed_at DESC LIMIT 15
+      `),
       getTiering(),
       getForecast(),
       detectAnomalies()
@@ -108,8 +113,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const activityLog = logs.rows.map(r => ({
       id: r.id,
       time: new Date(r.executed_at).toLocaleString('id-ID'),
-      user: "Admin Master",
-      role: "Admin",
+      user: r.user_name || "Sistem Otomatis",
+      role: r.user_role || "System",
       action: "Upload Laporan " + r.source_type,
       status: r.status.toLowerCase(),
       records: Number(r.rows_processed)
