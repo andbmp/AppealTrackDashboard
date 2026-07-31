@@ -4,24 +4,55 @@ import { StatusBadge, Card } from '../components/ui';
 import { activityLog } from '../store/data';
 import api from '../services/api';
 
-export default 
-function LogPage() {
+export default function LogPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     api.get("/dashboard")
       .then(res => setDashboardData(res.data))
       .catch(console.error);
   }, []);
 
+  const logsData = dashboardData?.activityLog || activityLog;
+  
+  const filteredLogs = logsData.filter((log: any) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      log.user?.toLowerCase().includes(q) ||
+      log.role?.toLowerCase().includes(q) ||
+      log.action?.toLowerCase().includes(q) ||
+      log.status?.toLowerCase().includes(q)
+    );
+  });
+
+  const downloadCSV = () => {
+    if (!filteredLogs || filteredLogs.length === 0) return;
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Waktu,Pengguna,Peran,Aktivitas,Status,Records\n"
+      + filteredLogs.map((l: any) => `"${l.time}","${l.user}","${l.role}","${l.action}","${l.status}","${l.records}"`).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "log_aktivitas.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
         <div className="flex-1 relative">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input placeholder="Cari aktivitas, pengguna, atau tindakan..."
+          <input 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari aktivitas, pengguna, atau tindakan..."
             className="w-full bg-slate-50 border border-slate-200 rounded-md pl-11 pr-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E32636]/20 focus:border-[#E32636] transition-all" />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+        <button onClick={downloadCSV} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
           <Download size={16} /> Export CSV
         </button>
       </div>
@@ -36,7 +67,7 @@ function LogPage() {
             </tr>
           </thead>
           <tbody>
-            {(dashboardData?.activityLog || activityLog).map((log: any) => (
+            {filteredLogs.map((log: any) => (
               <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4 text-slate-500 font-medium whitespace-nowrap">{log.time}</td>
                 <td className="px-6 py-4 text-slate-800 font-bold">{log.user}</td>
