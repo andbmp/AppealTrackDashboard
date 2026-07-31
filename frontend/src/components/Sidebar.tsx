@@ -23,7 +23,7 @@ function SidebarItem({ icon: Icon, label, to, active }: { icon: any, label: stri
   );
 }
 
-export function Sidebar({ auth, handleLogout }: { auth: any, handleLogout: () => void }) {
+export function Sidebar({ auth, handleLogout, isOpen, setIsOpen }: { auth: any, handleLogout: () => void, isOpen: boolean, setIsOpen: (val: boolean) => void }) {
   const location = useLocation();
 
   // Role-based menu generation
@@ -40,7 +40,15 @@ export function Sidebar({ auth, handleLogout }: { auth: any, handleLogout: () =>
   const allowedMenus = menus.filter(menu => menu.roles.includes(auth.role));
 
   return (
-    <aside className="w-64 bg-[#E32636] flex flex-col shadow-lg z-20 hidden md:flex">
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20 md:hidden" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      <aside className={`w-64 bg-[#E32636] flex flex-col shadow-lg z-30 fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center px-6 py-6 border-b border-red-500/30">
         <div className="text-white font-bold text-xl leading-tight tracking-wide">Dashboard<br/>Appeal PJP</div>
       </div>
@@ -74,5 +82,6 @@ export function Sidebar({ auth, handleLogout }: { auth: any, handleLogout: () =>
         </div>
       </div>
     </aside>
+    </>
   );
 }
