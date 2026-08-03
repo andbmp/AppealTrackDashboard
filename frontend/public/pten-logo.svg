@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <defs>
+    <style>
+      .gray { fill: #8fa0a3; font-family: 'Arial', sans-serif; font-weight: 900; font-size: 100px; letter-spacing: -2px; }
+      .red { fill: #ff0b3a; font-family: 'Arial', sans-serif; font-weight: 900; font-size: 100px; }
+    </style>
+  </defs>
+  <text x="20" y="100" class="gray">PTE</text>
+  <text x="210" y="100" class="red">N</text>
+</svg>

@@ -61,10 +61,7 @@ export default function Login({ setAuth }: { setAuth: (auth: any) => void }) {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 flex flex-col items-center">
-            <div className="bg-red-50 text-red-600 p-3 rounded-full mb-4 inline-block shadow-sm">
-              <ShieldAlert size={32} />
-            </div>
-            <h1 className="text-3xl font-bold text-red-600 mb-2 tracking-tight">ADMIN LOGIN</h1>
+            <img src="/pten-logo.jpg" alt="PTEN Logo" className="h-16 mb-6 object-contain" />
             <p className="text-gray-500 font-medium">Welcome back! Please login to your account.</p>
           </div>
           
