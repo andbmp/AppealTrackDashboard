@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getClient } from '../config/db';
+import { getClient, query } from '../config/db';
 import { getTiering, getForecast, detectAnomalies } from '../services/analytics';
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
@@ -19,7 +19,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         ? `WHERE a.report_date BETWEEN $1 AND $2` 
         : `WHERE a.report_date >= ${anchorDate}::DATE - INTERVAL '${interval}'`;
         
-      const res = await client.query(`
+      const res = await query(`
         WITH total_appeals AS (
           SELECT COUNT(*) as total FROM APPEALS a ${effectiveFilter}
         )
@@ -63,17 +63,17 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       forecast,
       anomalies
     ] = await Promise.all([
-      client.query(`SELECT COUNT(*) as total_appeal FROM APPEALS ${dateFilter}`, params),
-      client.query(`SELECT COUNT(DISTINCT mcc) as total_mcc FROM APPEALS ${dateFilter}`, params),
-      client.query(`SELECT pjp_name as pjp, COUNT(*) as count FROM APPEALS ${dateFilter ? dateFilter + " AND " : "WHERE "} status = 'Done' GROUP BY pjp_name`, params),
-      client.query(`SELECT report_date as tanggal, COUNT(*) as volume FROM APPEALS ${dateFilter} GROUP BY report_date ORDER BY report_date ASC`, params),
+      query(`SELECT COUNT(*) as total_appeal FROM APPEALS ${dateFilter}`, params),
+      query(`SELECT COUNT(DISTINCT mcc) as total_mcc FROM APPEALS ${dateFilter}`, params),
+      query(`SELECT pjp_name as pjp, COUNT(*) as count FROM APPEALS ${dateFilter ? dateFilter + " AND " : "WHERE "} status = 'Done' GROUP BY pjp_name`, params),
+      query(`SELECT report_date as tanggal, COUNT(*) as volume FROM APPEALS ${dateFilter} GROUP BY report_date ORDER BY report_date ASC`, params),
       getMccQuery('1 day'),
       getMccQuery('7 days'),
       getMccQuery('30 days'),
-      client.query(`SELECT EXTRACT(ISODOW FROM report_date) as dow, CEIL(EXTRACT(DAY FROM report_date)/7.0) as week, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY dow, week`, params),
-      client.query(`SELECT pjp_name as pjp, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%') as rn, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%') as rm, COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%') as wl, COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%') as rj FROM APPEALS ${dateFilter} GROUP BY pjp_name ORDER BY COUNT(*) DESC LIMIT 10`, params),
-      client.query(`SELECT TO_CHAR(report_date, 'Mon YYYY') as month, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'Done' OR status = 'done') as done, COUNT(*) FILTER (WHERE status = 'Pending' OR status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'Rejected' OR status = 'rejected') as rejected FROM APPEALS ${dateFilter} GROUP BY TO_CHAR(report_date, 'Mon YYYY'), EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date) ORDER BY EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date)`, params),
-      client.query(`
+      query(`SELECT EXTRACT(ISODOW FROM report_date) as dow, CEIL(EXTRACT(DAY FROM report_date)/7.0) as week, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY dow, week`, params),
+      query(`SELECT pjp_name as pjp, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%') as rn, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%') as rm, COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%') as wl, COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%') as rj FROM APPEALS ${dateFilter} GROUP BY pjp_name ORDER BY COUNT(*) DESC LIMIT 10`, params),
+      query(`SELECT TO_CHAR(report_date, 'Mon YYYY') as month, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'Done' OR status = 'done') as done, COUNT(*) FILTER (WHERE status = 'Pending' OR status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'Rejected' OR status = 'rejected') as rejected FROM APPEALS ${dateFilter} GROUP BY TO_CHAR(report_date, 'Mon YYYY'), EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date) ORDER BY EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date)`, params),
+      query(`
         SELECT 
           pjp_name as name, 
           'Bank' as type, 
@@ -90,7 +90,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         ORDER BY vol DESC 
         LIMIT 10
       `, params),
-      client.query(`
+      query(`
         SELECT i.id, i.executed_at, i.source_type, i.status, i.rows_processed, u.name as user_name, u.role as user_role 
         FROM IMPORT_LOGS i 
         LEFT JOIN USERS u ON i.user_id = u.id 

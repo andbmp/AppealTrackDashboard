@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, Layers } from 'lucide-react';
+import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, Layers, Activity } from 'lucide-react';
 
 // Palet warna yang lebih elegan, harmonis, dan modern (Premium Slate & Crimson tones)
 const PIE_COLORS = ['#E32636', '#FCA5A5', '#F87171', '#991B1B', '#FECACA', '#7F1D1D'];
@@ -14,6 +14,9 @@ interface DashboardData {
   trend: any[];
   dailyCount: any[];
   actionRatio: any[];
+  advanced?: any;
+  volumePerDate?: any[];
+  distributionByPjp?: any[];
 }
 
 export default function Dashboard({ auth }: { auth: any }) {
@@ -83,14 +86,11 @@ export default function Dashboard({ auth }: { auth: any }) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
           <div>
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Appeal {startDate && endDate ? '' : '(Bulan Ini)'}</h2>
             <p className="text-3xl font-bold text-slate-800">{data.totalAppeal || 0}</p>
-            <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
-              <TrendingUp size={14} /> Laporan diproses
-            </p>
           </div>
           <div className="bg-emerald-50 p-4 rounded-full group-hover:bg-emerald-100 transition-colors">
              <Layers className="text-emerald-600" size={24} />
@@ -101,12 +101,22 @@ export default function Dashboard({ auth }: { auth: any }) {
           <div>
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total MCC {startDate && endDate ? '' : '(Bulan Ini)'}</h2>
             <p className="text-3xl font-bold text-slate-800">{data.uniqueMcc || 0}</p>
-            <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
-              <TrendingUp size={14} /> Stabil bulan ini
-            </p>
           </div>
           <div className="bg-slate-50 p-4 rounded-full group-hover:bg-slate-100 transition-colors">
              <CreditCard className="text-slate-600" size={24} />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md hover:border-slate-200 transition-all">
+          <div>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Prediksi Bulan Depan</h2>
+            <p className="text-3xl font-bold text-slate-800">{data.advanced?.forecast?.forecastedNextMonthVolume?.toLocaleString('id-ID') || "—"}</p>
+            <p className="text-xs text-blue-600 mt-2 font-medium flex items-center gap-1">
+              <TrendingUp size={14} /> Berdasarkan historis (SMA)
+            </p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-full group-hover:bg-blue-100 transition-colors">
+             <Activity className="text-blue-600" size={24} />
           </div>
         </div>
       </div>
