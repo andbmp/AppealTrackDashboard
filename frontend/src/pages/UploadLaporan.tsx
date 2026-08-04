@@ -107,10 +107,20 @@ function UploadPage() {
         <div className="flex border-b border-gray-200">
           {(["file", "sheets"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-6 py-3 text-sm font-medium transition-colors ${
+              className={`px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 tab === t ? "text-[#E32636] border-b-2 border-[#E32636] -mb-px" : "text-gray-500 hover:text-gray-900"
               }`}>
-              {t === "file" ? "📄  Unggah File Excel (.xlsx)" : "🔗  Google Sheets"}
+              {t === "file" ? (
+                <>
+                  <img src="/excel-logo.png" alt="Excel" className="h-4 w-4 object-contain" />
+                  <span>Unggah File Excel (.xlsx)</span>
+                </>
+              ) : (
+                <>
+                  <img src="/google-sheets-logo.png" alt="Google Sheets" className="h-4 w-4 object-contain" />
+                  <span>Google Sheets</span>
+                </>
+              )}
             </button>
           ))}
         </div>
