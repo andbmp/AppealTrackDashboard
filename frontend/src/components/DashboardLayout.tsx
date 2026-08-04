@@ -39,8 +39,8 @@ export function DashboardLayout({ auth, setAuth, children }: { auth: any, setAut
             </div>
             <div className="flex items-center gap-3 md:pl-6 md:border-l border-gray-200">
                <span className="text-sm font-semibold text-gray-700 truncate max-w-[100px] md:max-w-none">Halo {auth.name}</span>
-               <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center border border-red-200 shrink-0">
-                  <User size={18} className="text-red-600" />
+               <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-gray-200 shadow-sm bg-white flex items-center justify-center">
+                  <img src="/icons-profiles.png" alt="Profile" className="w-full h-full object-cover" />
                </div>
             </div>
           </div>
