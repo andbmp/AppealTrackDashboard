@@ -65,9 +65,6 @@ export default function Dashboard({ auth }: { auth: any }) {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Executive Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1 flex items-center">
             Ringkasan performa appeal pendaftaran merchant PJP
-            <span className="ml-3 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-bold border border-blue-100 uppercase tracking-wider">
-              {startDate && endDate ? `${startDate} s/d ${endDate}` : 'Bulan Ini (30 Hari Terakhir)'}
-            </span>
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 items-end">
