@@ -5,7 +5,7 @@ import {
   Trophy, 
   List, 
   Settings as SettingsIcon, 
-  User, 
+  User,
   LogOut,
   BarChart2,
   Users
