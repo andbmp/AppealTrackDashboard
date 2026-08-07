@@ -61,7 +61,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       logs,
       tiering,
       forecast,
-      anomalies
+      anomalies,
+      heatDateRaw
     ] = await Promise.all([
       query(`SELECT COUNT(*) as total_appeal FROM APPEALS ${dateFilter}`, params),
       query(`SELECT COUNT(DISTINCT mcc) as total_mcc FROM APPEALS ${dateFilter}`, params),
@@ -98,7 +99,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       `),
       getTiering(),
       getForecast(),
-      detectAnomalies()
+      detectAnomalies(),
+      query(`SELECT EXTRACT(DAY FROM report_date) as date_num, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY date_num ORDER BY date_num`, params)
     ]);
 
     const dayMap = { 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu", 7: "Minggu" };
@@ -106,6 +108,14 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       day: dayMap[d as keyof typeof dayMap],
       w: [1,2,3,4].map(w => Number(heatRaw.rows.find(r => r.dow == d && r.week == w)?.count || 0))
     }));
+
+    const heatmapDateData = Array.from({ length: 31 }, (_, i) => {
+      const d = i + 1;
+      return {
+        date: d,
+        count: Number(heatDateRaw.rows.find(r => r.date_num == d)?.count || 0)
+      };
+    });
 
     const formattedTrend = monthlyTrend.rows.map(r => ({ month: r.month, total: Number(r.total), done: Number(r.done), pending: Number(r.pending), rejected: Number(r.rejected) }));
     const formattedTop = top5.rows.map(r => ({ ...r, vol: Number(r.vol), done: Number(r.done) }));
@@ -127,6 +137,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       volumePerDate: volumeQuery.rows.map(r => ({ tanggal: new Date(r.tanggal).toLocaleDateString('id-ID'), volume: Number(r.volume) })),
       mccData: { harian: mccHarian, mingguan: mccMingguan, bulanan: mccBulanan },
       heatmapData,
+      heatmapDateData,
       actionPjpData: actionPjp.rows.map(r => ({ pjp: r.pjp, rn: Number(r.rn), rm: Number(r.rm), wl: Number(r.wl), rj: Number(r.rj) })),
       monthlyTrend: formattedTrend,
       top5: formattedTop,

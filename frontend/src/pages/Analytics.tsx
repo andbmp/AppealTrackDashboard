@@ -49,12 +49,27 @@ function AnalyticsPage() {
     return "bg-[#E32636] text-white font-bold";
   };
 
+  const maxHeatDate = dashboardData?.heatmapDateData ? Math.max(...dashboardData.heatmapDateData.map((d:any) => d.count)) : 1;
+  const heatDateColor = (v: number) => {
+    if (v === 0) return "bg-slate-50 text-slate-300";
+    const pct = v / maxHeatDate;
+    if (pct < 0.25) return "bg-red-50 text-red-400";
+    if (pct < 0.5)  return "bg-red-200 text-red-600";
+    if (pct < 0.75) return "bg-red-400 text-white";
+    return "bg-[#E32636] text-white font-bold";
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#E32636]"></div>
     </div>
   );
   if (error) return <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200 shadow-sm">Gagal memuat data: {error}</div>;
+
+  const getFilterText = () => {
+    if (startDate && endDate) return `${startDate} s/d ${endDate}`;
+    return "30 Hari Terakhir";
+  };
 
   return (
     <div className="space-y-6">
@@ -143,43 +158,68 @@ function AnalyticsPage() {
         </table>
       </Card>
 
-      {/* Heatmap */}
-      <Card>
-        <CardHead title="Heatmap Distribusi — Hari × Minggu" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">Juli 2026</span>} />
-        <div className="p-6 overflow-x-auto">
-          <table className="w-full text-sm min-w-[380px]">
-            <thead>
-              <tr>
-                <th className="text-left pr-4 py-2 text-slate-400 w-16 text-xs uppercase tracking-wider">Hari</th>
-                {["Minggu 1", "Minggu 2", "Minggu 3", "Minggu 4"].map(w => (
-                  <th key={w} className="text-center px-2 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">{w}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(dashboardData?.heatmapData || heatmapData).map((row: any) => (
-                <tr key={row.day}>
-                  <td className="pr-4 py-2 text-slate-700 font-bold text-xs uppercase">{row.day}</td>
-                  {row.w.map((v: number, wi: number) => (
-                    <td key={wi} className="px-1.5 py-1.5">
-                      <div className={`text-center py-3 rounded-md text-xs transition-colors border border-transparent ${heatColor(v)} ${v > 0 ? 'shadow-sm' : ''}`}>
-                        {v > 0 ? v : "—"}
-                      </div>
-                    </td>
+      {/* Heatmap Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <Card>
+          <CardHead title="Heatmap Distribusi — Hari × Minggu" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{getFilterText()}</span>} />
+          <div className="p-6 overflow-x-auto">
+            <table className="w-full text-sm min-w-[380px]">
+              <thead>
+                <tr>
+                  <th className="text-left pr-4 py-2 text-slate-400 w-16 text-xs uppercase tracking-wider">Hari</th>
+                  {["Minggu 1", "Minggu 2", "Minggu 3", "Minggu 4"].map(w => (
+                    <th key={w} className="text-center px-2 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">{w}</th>
                   ))}
                 </tr>
+              </thead>
+              <tbody>
+                {(dashboardData?.heatmapData || heatmapData).map((row: any) => (
+                  <tr key={row.day}>
+                    <td className="pr-4 py-2 text-slate-700 font-bold text-xs uppercase">{row.day}</td>
+                    {row.w.map((v: number, wi: number) => (
+                      <td key={wi} className="px-1.5 py-1.5">
+                        <div className={`text-center py-3 rounded-md text-xs transition-colors border border-transparent ${heatColor(v)} ${v > 0 ? 'shadow-sm' : ''}`}>
+                          {v > 0 ? v : "—"}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="flex items-center gap-2 mt-6 text-xs font-medium text-slate-500 justify-end">
+              <span>Rendah</span>
+              {["bg-red-50", "bg-red-200", "bg-red-400", "bg-[#E32636]"].map((c, i) => (
+                <div key={i} className={`w-10 h-3 rounded-sm ${c}`} />
               ))}
-            </tbody>
-          </table>
-          <div className="flex items-center gap-2 mt-6 text-xs font-medium text-slate-500 justify-end">
-            <span>Rendah</span>
-            {["bg-red-50", "bg-red-200", "bg-red-400", "bg-[#E32636]"].map((c, i) => (
-              <div key={i} className={`w-10 h-3 rounded-sm ${c}`} />
-            ))}
-            <span>Tinggi</span>
+              <span>Tinggi</span>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+
+        {dashboardData?.heatmapDateData && (
+          <Card>
+            <CardHead title="Heatmap Distribusi — Tanggal (1-31)" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{getFilterText()}</span>} />
+            <div className="p-6 overflow-x-auto">
+              <div className="grid grid-cols-7 gap-1.5 min-w-[380px]">
+                {dashboardData.heatmapDateData.map((item: any, i: number) => (
+                  <div key={i} className={`flex flex-col justify-between p-2 h-14 rounded-md border transition-colors ${item.count > 0 ? heatDateColor(item.count) + ' border-transparent shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+                    <span className={`text-[10px] font-bold ${item.count > 0 ? 'opacity-80' : 'text-slate-400'}`}>{item.date}</span>
+                    <span className="text-xs font-black text-center">{item.count > 0 ? item.count : ""}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-6 text-xs font-medium text-slate-500 justify-end">
+                <span>Rendah</span>
+                {["bg-red-50", "bg-red-200", "bg-red-400", "bg-[#E32636]"].map((c, i) => (
+                  <div key={i} className={`w-10 h-3 rounded-sm ${c}`} />
+                ))}
+                <span>Tinggi</span>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
 
       {/* Action Ratio */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
