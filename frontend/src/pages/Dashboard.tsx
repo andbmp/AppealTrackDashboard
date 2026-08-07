@@ -121,19 +121,26 @@ export default function Dashboard({ auth }: { auth: any }) {
              <BarChart3 className="text-slate-400" size={20} />
              <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian {startDate && endDate ? '' : '(30 Hari)'}</h2>
           </div>
-          <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.volumePerDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="tanggal" tickFormatter={(str) => str ? str.substring(8, 10) : ''} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip 
-                  cursor={{fill: '#f8fafc'}}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
-                />
-                <Bar dataKey="volume" fill="#E32636" radius={[4, 4, 0, 0]} maxBarSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex-1 min-h-0 relative flex items-center justify-center">
+            {data.volumePerDate?.length === 0 ? (
+              <div className="text-center text-slate-400">
+                <BarChart3 className="mx-auto mb-2 opacity-50" size={32} />
+                <p className="text-sm">Tidak ada data untuk periode ini</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.volumePerDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="tanggal" tickFormatter={(str) => str ? str.split('/')[0] : ''} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip 
+                    cursor={{fill: '#f8fafc'}}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+                  />
+                  <Bar dataKey="volume" fill="#E32636" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
