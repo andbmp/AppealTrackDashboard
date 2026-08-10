@@ -161,7 +161,7 @@ function AnalyticsPage() {
       {/* Heatmap Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card>
-          <CardHead title="Heatmap Distribusi — Hari × Minggu" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{getFilterText()}</span>} />
+          <CardHead title="Heatmap Berdasarkan Hari" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{getFilterText()}</span>} />
           <div className="p-6 overflow-x-auto">
             <table className="w-full text-sm min-w-[380px]">
               <thead>
@@ -199,7 +199,7 @@ function AnalyticsPage() {
 
         {dashboardData?.heatmapDateData && (
           <Card>
-            <CardHead title="Heatmap Distribusi — Tanggal (1-31)" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{getFilterText()}</span>} />
+            <CardHead title="Heatmap Berdasarkan Tanggal" extra={<span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">{getFilterText()}</span>} />
             <div className="p-6 overflow-x-auto">
               <div className="grid grid-cols-7 gap-1.5 min-w-[380px]">
                 {dashboardData.heatmapDateData.map((item: any, i: number) => (

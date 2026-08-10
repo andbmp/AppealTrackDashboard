@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, Layers, Activity } from 'lucide-react';
+import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, Layers, Activity, AlertTriangle, AlertCircle } from 'lucide-react';
 
 // Palet warna yang lebih elegan, harmonis, dan modern (Premium Slate & Crimson tones)
 const PIE_COLORS = ['#E32636', '#FCA5A5', '#F87171', '#991B1B', '#FECACA', '#7F1D1D'];
@@ -120,6 +120,28 @@ export default function Dashboard({ auth }: { auth: any }) {
           </div>
         </div>
       </div>
+
+      {data.advanced?.anomalies?.anomaliesDetected?.length > 0 && (
+        <div className="bg-red-50/50 border border-red-200 rounded-xl p-6 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="text-red-600" size={24} />
+            <h2 className="font-bold text-red-800 text-lg">Peringatan Anomali Sistem (7 Hari Terakhir)</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.advanced.anomalies.anomaliesDetected.map((ano: any, i: number) => (
+              <div key={i} className="bg-white border border-red-100 hover:border-red-300 transition-colors rounded-lg p-4 shadow-sm flex items-start gap-4">
+                <div className={`p-2 rounded-full shrink-0 ${ano.severity === 'high' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">{ano.title}</h3>
+                  <p className="text-sm text-slate-600 mt-1">{ano.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* FR-11: Grafik Batang Jumlah Proses Per Tanggal */}

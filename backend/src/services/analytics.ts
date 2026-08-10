@@ -51,6 +51,57 @@ export async function getForecast() {
 }
 
 export async function detectAnomalies() {
-   const forecast = await getForecast();
-   return { anomaliesDetected: [] };
+   const client = await getClient();
+   const anomaliesDetected: any[] = [];
+   try {
+     const maxDateRes = await client.query(`SELECT MAX(report_date) as max_date FROM APPEALS`);
+     const anchorDate = maxDateRes.rows[0].max_date ? `'${maxDateRes.rows[0].max_date.toISOString().split('T')[0]}'` : 'CURRENT_DATE';
+
+     // Anomali 1: PJP Spike ( > 15 volume per hari untuk 1 PJP )
+     const pjpSpike = await client.query(`
+       SELECT pjp_name, report_date, COUNT(*) as vol
+       FROM APPEALS
+       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '7 days'
+       GROUP BY pjp_name, report_date
+       HAVING COUNT(*) > 15
+       ORDER BY report_date DESC
+     `);
+
+     for (const row of pjpSpike.rows) {
+       anomaliesDetected.push({
+         type: 'PJP_SPIKE',
+         title: `Lonjakan Volume PJP: ${row.pjp_name}`,
+         description: `Terdeteksi ${row.vol} pengajuan dari ${row.pjp_name} pada tanggal ${new Date(row.report_date).toLocaleDateString('id-ID')}. Ini melebihi batas kewajaran harian.`,
+         severity: 'high',
+         date: row.report_date
+       });
+     }
+
+     // Anomali 2: MCC Konsentrasi Tinggi ( > 10 per hari untuk 1 MCC spesifik )
+     const mccSpike = await client.query(`
+       SELECT mcc, report_date, COUNT(*) as vol
+       FROM APPEALS
+       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '7 days'
+       GROUP BY mcc, report_date
+       HAVING COUNT(*) > 10
+       ORDER BY report_date DESC
+     `);
+
+     for (const row of mccSpike.rows) {
+       anomaliesDetected.push({
+         type: 'MCC_SPIKE',
+         title: `Konsentrasi MCC Berisiko: ${row.mcc}`,
+         description: `Terdapat ${row.vol} pengajuan pada MCC ${row.mcc} dalam satu hari (${new Date(row.report_date).toLocaleDateString('id-ID')}). Harap periksa kemungkinan fraud/anomali.`,
+         severity: 'medium',
+         date: row.report_date
+       });
+     }
+
+     return { anomaliesDetected };
+   } catch (err: any) {
+     console.error("Anomaly Detection Error:", err);
+     return { anomaliesDetected: [] };
+   } finally {
+     client.release();
+   }
 }
