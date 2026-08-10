@@ -50,8 +50,8 @@ export default function Login({ setAuth }: { setAuth: (auth: any) => void }) {
       {/* Left side: Image */}
       <div className="hidden lg:block lg:w-1/2 relative bg-gray-900">
         <img 
-          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
-          alt="Office Building" 
+          src="/graha-mandiri.jpg" 
+          alt="Graha Mandiri Building" 
           className="absolute inset-0 w-full h-full object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-red-900/20 mix-blend-multiply"></div>
