@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Label } from 'recharts';
 import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, Layers, Activity, AlertTriangle, AlertCircle } from 'lucide-react';
 
 // Palet warna yang lebih elegan, harmonis, dan modern (Premium Slate & Crimson tones)
 const PIE_COLORS = ['#E32636', '#FCA5A5', '#F87171', '#991B1B', '#FECACA', '#7F1D1D'];
-
-const renderCustomizedLabel = (props: any) => {
-  const { x, y, name, value, textAnchor } = props;
-  return (
-    <text x={x} y={y} fill="black" textAnchor={textAnchor} dominantBaseline="central" fontSize={12} fontWeight={500}>
-      {`${name}: ${value}`}
-    </text>
-  );
-};
 
 interface DashboardData {
   totalAppeal: string | number;
@@ -203,14 +194,24 @@ export default function Dashboard({ auth }: { auth: any }) {
                     nameKey="pjp" 
                     cx="50%" cy="50%" 
                     innerRadius={70} 
-                    outerRadius={90} 
+                    outerRadius={100} 
                     paddingAngle={2}
-                    label={renderCustomizedLabel}
-                    labelLine={true}
                   >
                     {data.distributionByPjp?.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="transparent" />
                     ))}
+                    <Label
+                      content={({ viewBox }: any) => {
+                        const { cx, cy } = viewBox;
+                        const total = data.distributionByPjp?.reduce((acc: number, item: any) => acc + item.count, 0) || 0;
+                        return (
+                          <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
+                            <tspan x={cx} y={cy - 4} fontSize="28" fontWeight="700" fill="#1e293b">{total}</tspan>
+                            <tspan x={cx} y={cy + 18} fontSize="11" fontWeight="600" fill="#64748b" letterSpacing="0.05em">TOTAL</tspan>
+                          </text>
+                        );
+                      }}
+                    />
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 </PieChart>
