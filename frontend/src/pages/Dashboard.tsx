@@ -6,6 +6,15 @@ import { CreditCard, TrendingUp, AlertOctagon, BarChart3, PieChart as PieIcon, L
 // Palet warna yang lebih elegan, harmonis, dan modern (Premium Slate & Crimson tones)
 const PIE_COLORS = ['#E32636', '#FCA5A5', '#F87171', '#991B1B', '#FECACA', '#7F1D1D'];
 
+const renderCustomizedLabel = (props: any) => {
+  const { x, y, name, value, textAnchor } = props;
+  return (
+    <text x={x} y={y} fill="black" textAnchor={textAnchor} dominantBaseline="central" fontSize={12} fontWeight={500}>
+      {`${name}: ${value}`}
+    </text>
+  );
+};
+
 interface DashboardData {
   totalAppeal: string | number;
   uniqueMcc: string | number;
@@ -194,8 +203,10 @@ export default function Dashboard({ auth }: { auth: any }) {
                     nameKey="pjp" 
                     cx="50%" cy="50%" 
                     innerRadius={70} 
-                    outerRadius={100} 
+                    outerRadius={90} 
                     paddingAngle={2}
+                    label={renderCustomizedLabel}
+                    labelLine={true}
                   >
                     {data.distributionByPjp?.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="transparent" />
