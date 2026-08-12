@@ -100,7 +100,7 @@ export default function KelolaUser({ auth }: { auth: any }) {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
              <Users className="text-[#E32636]" /> Kelola Pengguna
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Manajemen akun karyawan untuk akses aplikasi</p>
+          <p className="text-sm text-gray-500 mt-1">Manajemen Worker Appeal Account untuk akses aplikasi</p>
         </div>
       </div>
 
