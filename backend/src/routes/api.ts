@@ -16,8 +16,8 @@ router.post('/login', login);
 // Protected routes
 router.post('/upload', requireRole([Roles.ADMIN, Roles.STAFF]), upload.single('file'), uploadData);
 router.get('/dashboard', requireRole([Roles.ADMIN, Roles.MANAJEMEN, Roles.STAFF]), getDashboardStats);
-router.get('/admin/config', requireRole([Roles.ADMIN]), getConfig);
-router.post('/admin/config', requireRole([Roles.ADMIN]), updateConfig);
+router.get('/admin/config', requireRole([Roles.ADMIN, Roles.MANAJEMEN]), getConfig);
+router.post('/admin/config', requireRole([Roles.ADMIN, Roles.MANAJEMEN]), updateConfig);
 
 // User routes
 router.get('/users', requireRole([Roles.ADMIN]), getUsers);
