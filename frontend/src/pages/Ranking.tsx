@@ -87,9 +87,17 @@ function RankingPage() {
             {ranked.map((pjp: any, i: number) => (
               <tr key={i} className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${i === 0 ? "bg-red-50/30" : ""}`}>
                 <td className="px-6 py-4">
-                  <span className={`font-black text-lg ${i === 0 ? "text-[#E32636]" : i === 1 ? "text-slate-400" : i === 2 ? "text-orange-500" : "text-slate-300"}`}>
-                    {i + 1}
-                  </span>
+                  {i === 0 ? (
+                    <img src="/icons8-gold-medal-30.png" alt="Rank 1" className="w-10 h-10 object-contain" title="Peringkat 1" />
+                  ) : i === 1 ? (
+                    <img src="/icons8-silver-medal-30.png" alt="Rank 2" className="w-10 h-10 object-contain" title="Peringkat 2" />
+                  ) : i === 2 ? (
+                    <img src="/icons8-bronze-medal-30.png" alt="Rank 3" className="w-10 h-10 object-contain" title="Peringkat 3" />
+                  ) : (
+                    <span className="font-black text-lg text-slate-300 ml-3">
+                      {i + 1}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-slate-800 font-bold">{pjp.name}</td>
                 <td className="px-6 py-4"><TierBadge tier={pjp.tier} /></td>
