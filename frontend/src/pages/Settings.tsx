@@ -7,9 +7,40 @@ import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
 
 export default function SettingsPage({ role }: any) {
-  const [emailList, setEmailList] = useState("ops-team@bank.go.id\nmanager@bank.go.id\nreporting@bank.go.id");
+  const [emailList, setEmailList] = useState("");
+  const [sheetUrl, setSheetUrl] = useState("");
   const [waEnabled, setWaEnabled] = useState(true);
   const [schedule, setSchedule] = useState("harian");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (role !== "Staff") {
+      api.get('/admin/config').then(res => {
+        if (res.data.emails && res.data.emails.length > 0) {
+          setEmailList(res.data.emails.join('\n'));
+        }
+        if (res.data.sheetUrl) {
+          setSheetUrl(res.data.sheetUrl);
+        }
+      }).catch(console.error);
+    }
+  }, [role]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Split by newline OR comma to be robust
+      const emails = emailList.split(/[\n,]+/).map(e => e.trim()).filter(Boolean);
+      await api.post('/admin/config', { emails, sheetUrl });
+      alert('Pengaturan berhasil disimpan!');
+      // Re-format the text area to use newlines for neatness
+      setEmailList(emails.join('\n'));
+    } catch (error) {
+      alert('Gagal menyimpan pengaturan');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (role === "Staff") {
     return (
@@ -30,7 +61,10 @@ export default function SettingsPage({ role }: any) {
         <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Sumber Data</h3>
         <div>
           <label className="block text-sm text-muted-foreground mb-2 font-sans uppercase tracking-widest">Path / URL Sumber Data Default</label>
-          <input defaultValue="https://docs.google.com/spreadsheets/d/1aBcDeFgHiJkL..."
+          <input 
+            value={sheetUrl}
+            onChange={(e) => setSheetUrl(e.target.value)}
+            placeholder="https://docs.google.com/spreadsheets/d/..."
             className="w-full bg-muted border border-border rounded px-3 py-2 text-base font-sans text-foreground focus:outline-none focus:border-[#00d4aa] transition-colors" />
         </div>
         <div>
@@ -73,8 +107,11 @@ export default function SettingsPage({ role }: any) {
             ))}
           </select>
         </div>
-        <button className="px-5 py-2 bg-[#00d4aa] text-[#070d1a] text-base font-semibold rounded hover:bg-[#00c49a] transition-colors">
-          Simpan Perubahan
+        <button 
+          onClick={handleSave}
+          disabled={isSaving}
+          className="px-5 py-2 bg-[#00d4aa] text-[#070d1a] text-base font-semibold rounded hover:bg-[#00c49a] transition-colors disabled:opacity-50">
+          {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
         </button>
       </Card>
 

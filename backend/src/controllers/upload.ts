@@ -6,6 +6,8 @@ import { AuthRequest } from '../middlewares/rbac';
 import { cleanseAndTransform } from '../utils/cleansing';
 import { UploadService } from '../services/upload.service';
 import { CleanedData } from '../interfaces/upload.interface';
+import { detectAnomalies } from '../services/analytics';
+import { sendAnomalyEmail } from '../services/emailService';
 
 export const uploadData = async (req: AuthRequest, res: Response): Promise<void> => {
   const client = await getClient();
@@ -112,7 +114,26 @@ export const uploadData = async (req: AuthRequest, res: Response): Promise<void>
       console.error("DEBUG UPLOAD ERROR (First Row):", errors[0]);
     }
 
-    // 6. Response
+    // 6. Jalankan Anomaly Detection setelah data masuk, lalu kirim Email jika ada
+    if (successCount > 0) {
+      try {
+        const anomalyData = await detectAnomalies();
+        if (anomalyData.anomaliesDetected && anomalyData.anomaliesDetected.length > 0) {
+          // TODO: Ambil email dari database SCHEDULED_REPORTS. Sementara pakai dummy/fallback:
+          const emailListRes = await client.query('SELECT recipient_emails FROM SCHEDULED_REPORTS LIMIT 1');
+          let recipients = ["ops-team@bank.go.id"];
+          if (emailListRes.rows.length > 0 && emailListRes.rows[0].recipient_emails) {
+            recipients = emailListRes.rows[0].recipient_emails.split('\n').map((e: string) => e.trim()).filter(Boolean);
+          }
+          // Kirim email secara asynchronous agar tidak memblokir respon ke client
+          sendAnomalyEmail(recipients, anomalyData.anomaliesDetected).catch(console.error);
+        }
+      } catch (anoErr) {
+        console.error("Gagal menjalankan deteksi anomali pasca-upload:", anoErr);
+      }
+    }
+
+    // 7. Response
     res.status(200).json({
       message: 'Processing complete',
       totalRows: totalRawRows,
