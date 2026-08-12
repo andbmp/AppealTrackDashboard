@@ -125,9 +125,9 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-red-50/50 border border-red-200 rounded-xl p-6 lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="text-red-600" size={24} />
-            <h2 className="font-bold text-red-800 text-lg">Peringatan Anomali Sistem (7 Hari Terakhir)</h2>
+            <h2 className="font-bold text-red-800 text-lg">Peringatan Anomali Sistem (15 Hari Terakhir)</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-2">
             {data.advanced.anomalies.anomaliesDetected.map((ano: any, i: number) => (
               <div key={i} className="bg-white border border-red-100 hover:border-red-300 transition-colors rounded-lg p-4 shadow-sm flex items-start gap-4">
                 <div className={`p-2 rounded-full shrink-0 ${ano.severity === 'high' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
