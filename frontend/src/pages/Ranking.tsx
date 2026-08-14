@@ -124,7 +124,7 @@ function RankingPage() {
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={ranked.map((d: any) => ({ name: d.name.replace("Bank ", ""), volume: d.vol, done: d.done }))} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-              <XAxis type="number" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
+              <XAxis allowDecimals={false} type="number" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fill: "#475569", fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600 }} axisLine={false} tickLine={false} width={100} />
               <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
               <Bar dataKey="volume" name="Volume" fill="#94a3b8" radius={[0, 4, 4, 0]} maxBarSize={20} />
