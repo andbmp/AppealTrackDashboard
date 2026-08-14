@@ -23,6 +23,7 @@ export default function KelolaUser({ auth }: { auth: any }) {
   const [role, setRole] = useState('Staff');
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: '', name: '' });
 
   useEffect(() => {
     fetchUsers();
@@ -80,14 +81,17 @@ export default function KelolaUser({ auth }: { auth: any }) {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Peringatan: Apakah Anda yakin ingin menghapus permanen pengguna "${name}"?`)) return;
-    
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteModal({ isOpen: true, id, name });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/users/${id}`, {
+      await axios.delete(`http://localhost:5000/api/users/${deleteModal.id}`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       fetchUsers();
+      setDeleteModal({ isOpen: false, id: '', name: '' });
     } catch (err: any) {
       alert(err.response?.data?.error || 'Gagal menghapus pengguna');
     }
@@ -236,7 +240,7 @@ export default function KelolaUser({ auth }: { auth: any }) {
                               <Power size={16} className={u.is_active ? "text-amber-500" : "text-emerald-500"} />
                             </button>
                             <button 
-                              onClick={() => handleDelete(u.id, u.name)}
+                              onClick={() => handleDeleteClick(u.id, u.name)}
                               className="p-1.5 rounded text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                               title="Hapus Permanen"
                             >
@@ -253,6 +257,37 @@ export default function KelolaUser({ auth }: { auth: any }) {
           </div>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Hapus */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                <AlertCircle className="text-red-600" size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-center text-gray-900 mb-2">Konfirmasi Hapus</h3>
+              <p className="text-center text-gray-500 mb-6 text-sm">
+                Apakah Anda yakin ingin menghapus permanen pengguna ini?
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setDeleteModal({ isOpen: false, id: '', name: '' })}
+                  className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} /> Ya, Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
