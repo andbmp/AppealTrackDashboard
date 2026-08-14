@@ -148,7 +148,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
           <div className="flex items-center gap-2 mb-6">
              <BarChart3 className="text-slate-400" size={20} />
-             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian {startDate && endDate ? '' : '(30 Hari)'}</h2>
+             <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian</h2>
           </div>
           <div className="flex-1 min-h-0 relative flex items-center justify-center">
             {data.volumePerDate?.length === 0 ? (
@@ -177,7 +177,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
           <div className="flex items-center gap-2 mb-6">
              <PieIcon className="text-slate-400" size={20} />
-             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done' {startDate && endDate ? '' : '(30 Hari)'}</h2>
+             <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Status 'Done'</h2>
           </div>
           <div className="flex-1 min-h-0 relative flex items-center justify-center">
             {data.distributionByPjp?.length === 0 ? (

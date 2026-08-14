@@ -107,7 +107,6 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 
   const client = await getClient();
   try {
-    // Check if it's the super admin
     const { rows: userRows } = await client.query('SELECT email FROM USERS WHERE id = $1', [id]);
     if (userRows.length > 0 && userRows[0].email === 'admin@gmail.com') {
       res.status(403).json({ error: 'Tindakan ditolak: Akun Super Admin (admin@gmail.com) tidak boleh dihapus.' });
