@@ -117,7 +117,7 @@ function AnalyticsPage() {
             <BarChart data={dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.semua || mccData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="mcc" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} dy={10} />
-              <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
               <Tooltip cursor={{fill: '#f8fafc'}} content={<Tip />} />
               <Bar dataKey="appeals" name="Appeal MCC"      fill="#E32636" radius={[4, 4, 0, 0]} maxBarSize={40} />
               <Bar dataKey="count"   name="Total Merchant"  fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -254,7 +254,7 @@ function AnalyticsPage() {
               <LineChart data={dashboardData?.monthlyTrend || monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} dy={10} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Line type="monotone" dataKey="total"    stroke="#94a3b8" strokeWidth={2} dot={{ fill: "#94a3b8", r: 4, strokeWidth: 0 }} name="Total" />
                 <Line type="monotone" dataKey="done"     stroke="#E32636" strokeWidth={3} dot={{ fill: "#E32636", r: 4, strokeWidth: 0 }} name="Done" />
