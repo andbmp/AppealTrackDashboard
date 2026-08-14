@@ -37,7 +37,7 @@ function AnalyticsPage() {
     }
   };
 
-  const [mccWindow, setMccWindow] = useState<"harian" | "mingguan" | "bulanan">("harian");
+  const [mccWindow, setMccWindow] = useState<"semua" | "harian" | "mingguan" | "bulanan">("semua");
 
   const maxHeat = Math.max(...(dashboardData?.heatmapData || heatmapData).flatMap((d: any) => d.w));
   const heatColor = (v: number) => {
@@ -68,7 +68,7 @@ function AnalyticsPage() {
 
   const getFilterText = () => {
     if (startDate && endDate) return `${startDate} s/d ${endDate}`;
-    return "30 Hari Terakhir";
+    return "Semua Waktu";
   };
 
   return (
@@ -100,7 +100,7 @@ function AnalyticsPage() {
           extra={
             !(startDate && endDate) ? (
               <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                {(["harian", "mingguan", "bulanan"] as const).map(w => (
+                {(["semua", "harian", "mingguan", "bulanan"] as const).map(w => (
                   <button key={w} onClick={() => setMccWindow(w)}
                     className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
                       mccWindow === w ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-800"
@@ -114,7 +114,7 @@ function AnalyticsPage() {
         />
         <div className="p-6">
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.harian || mccData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <BarChart data={dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.semua || mccData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="mcc" tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} dy={10} />
               <YAxis tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
@@ -138,7 +138,7 @@ function AnalyticsPage() {
             </tr>
           </thead>
           <tbody>
-            {(dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.harian || mccData).map((row: any, i: number) => (
+            {(dashboardData?.mccData?.[mccWindow] || dashboardData?.mccData?.semua || mccData).map((row: any, i: number) => (
               <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4 text-slate-800 font-bold">{row.mcc}</td>
                 <td className="px-6 py-4 text-slate-600">{row.label}</td>

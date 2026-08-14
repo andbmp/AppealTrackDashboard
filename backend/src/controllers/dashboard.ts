@@ -11,7 +11,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const { startDate, endDate } = req.query;
     const dateFilter = startDate && endDate 
       ? `WHERE report_date BETWEEN $1 AND $2` 
-      : `WHERE report_date >= ${anchorDate}::DATE - INTERVAL '30 days'`;
+      : ``;
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     const getMccQuery = async (interval: string) => {
@@ -54,6 +54,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       mccHarian,
       mccMingguan,
       mccBulanan,
+      mccSemua,
       heatRaw,
       actionPjp,
       monthlyTrend,
@@ -71,6 +72,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       getMccQuery('1 day'),
       getMccQuery('7 days'),
       getMccQuery('30 days'),
+      getMccQuery('36500 days'),
       query(`SELECT EXTRACT(ISODOW FROM report_date) as dow, CEIL(EXTRACT(DAY FROM report_date)/7.0) as week, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY dow, week`, params),
       query(`SELECT pjp_name as pjp, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%') as rn, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%') as rm, COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%') as wl, COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%') as rj FROM APPEALS ${dateFilter} GROUP BY pjp_name ORDER BY COUNT(*) DESC LIMIT 10`, params),
       query(`SELECT TO_CHAR(report_date, 'Mon YYYY') as month, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'Done' OR status = 'done') as done, COUNT(*) FILTER (WHERE status = 'Pending' OR status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'Rejected' OR status = 'rejected') as rejected FROM APPEALS ${dateFilter} GROUP BY TO_CHAR(report_date, 'Mon YYYY'), EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date) ORDER BY EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date)`, params),
@@ -135,7 +137,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       uniqueMcc: mccQuery.rows[0].total_mcc,
       distributionByPjp: pjpQuery.rows.map(r => ({ pjp: r.pjp, count: Number(r.count) })),
       volumePerDate: volumeQuery.rows.map(r => ({ tanggal: new Date(r.tanggal).toLocaleDateString('id-ID'), volume: Number(r.volume) })),
-      mccData: { harian: mccHarian, mingguan: mccMingguan, bulanan: mccBulanan },
+      mccData: { harian: mccHarian, mingguan: mccMingguan, bulanan: mccBulanan, semua: mccSemua },
       heatmapData,
       heatmapDateData,
       actionPjpData: actionPjp.rows.map(r => ({ pjp: r.pjp, rn: Number(r.rn), rm: Number(r.rm), wl: Number(r.wl), rj: Number(r.rj) })),
