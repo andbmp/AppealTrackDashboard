@@ -74,7 +74,22 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       getMccQuery('30 days'),
       getMccQuery('36500 days'),
       query(`SELECT EXTRACT(ISODOW FROM report_date) as dow, CEIL(EXTRACT(DAY FROM report_date)/7.0) as week, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY dow, week`, params),
-      query(`SELECT pjp_name as pjp, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%') as rn, COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%') as rm, COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%') as wl, COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%') as rj FROM APPEALS ${dateFilter} GROUP BY pjp_name ORDER BY COUNT(*) DESC LIMIT 10`, params),
+      query(`
+        SELECT 
+          pjp_name as pjp, 
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%' AND detail_action NOT ILIKE '%Whitelist%' AND detail_action NOT ILIKE '%Rekomendasi MCC%') as rn, 
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi MCC%' AND detail_action NOT ILIKE '%Whitelist%' AND detail_action NOT ILIKE '%Rekomendasi Nama%') as rm, 
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%' AND detail_action NOT ILIKE '%Rekomendasi%') as wl, 
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Reject%' OR detail_action ILIKE '%Tolak%') as rj,
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%' AND detail_action ILIKE '%Rekomendasi Nama%') as wl_rn,
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Whitelist%' AND detail_action ILIKE '%Rekomendasi MCC%') as wl_rm,
+          COUNT(*) FILTER (WHERE detail_action ILIKE '%Rekomendasi Nama%' AND detail_action ILIKE '%Rekomendasi MCC%' AND detail_action NOT ILIKE '%Whitelist%') as rn_rm
+        FROM APPEALS 
+        ${dateFilter} 
+        GROUP BY pjp_name 
+        ORDER BY COUNT(*) DESC 
+        LIMIT 10
+      `, params),
       query(`SELECT TO_CHAR(report_date, 'Mon YYYY') as month, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'Done' OR status = 'done') as done, COUNT(*) FILTER (WHERE status = 'Pending' OR status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'Rejected' OR status = 'rejected') as rejected FROM APPEALS ${dateFilter} GROUP BY TO_CHAR(report_date, 'Mon YYYY'), EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date) ORDER BY EXTRACT(YEAR FROM report_date), EXTRACT(MONTH FROM report_date)`, params),
       query(`
         SELECT 
@@ -140,7 +155,16 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       mccData: { harian: mccHarian, mingguan: mccMingguan, bulanan: mccBulanan, semua: mccSemua },
       heatmapData,
       heatmapDateData,
-      actionPjpData: actionPjp.rows.map(r => ({ pjp: r.pjp, rn: Number(r.rn), rm: Number(r.rm), wl: Number(r.wl), rj: Number(r.rj) })),
+      actionPjpData: actionPjp.rows.map(r => ({ 
+        pjp: r.pjp, 
+        rn: Number(r.rn), 
+        rm: Number(r.rm), 
+        wl: Number(r.wl), 
+        rj: Number(r.rj),
+        wl_rn: Number(r.wl_rn),
+        wl_rm: Number(r.wl_rm),
+        rn_rm: Number(r.rn_rm)
+      })),
       monthlyTrend: formattedTrend,
       top5: formattedTop,
       activityLog,

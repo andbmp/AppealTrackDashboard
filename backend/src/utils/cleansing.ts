@@ -69,24 +69,30 @@ export const cleanseAndTransform = (row: any): CleanedData | null => {
 
   // 5. ACTION & STATUS (Deteksi Keyword)
   const allValues = Object.values(row).map(String).join(' ').toLowerCase();
-  let detail_action = 'Rekomendasi Nama';
-  let status = 'Pending';
+  const actionsFound: string[] = [];
   
-  if (allValues.includes('whitelist')) {
-      detail_action = 'Whitelist';
-      status = 'Done';
-  } else if (allValues.includes('reject') || allValues.includes('tolak')) {
-      detail_action = 'Reject';
+  if (allValues.includes('whitelist') || allValues.includes('done') || allValues.includes('selesai') || allValues.includes('sesuai')) {
+      actionsFound.push('Whitelist');
+  }
+  if (allValues.includes('reject') || allValues.includes('tolak')) {
+      actionsFound.push('Reject');
+  }
+  if (allValues.includes('mcc')) {
+      actionsFound.push('Rekomendasi MCC');
+  }
+  if (allValues.includes('nama') || allValues.includes('rekomendasi nama')) {
+      actionsFound.push('Rekomendasi Nama');
+  }
+
+  // Jika tidak ditemukan apa-apa, fallback ke Pending Manual Review
+  let detail_action = actionsFound.length > 0 ? actionsFound.join(' & ') : 'Pending Manual Review';
+  
+  // Status Database Internal Tetap 1 Final State (untuk Grafik Pie & Garis)
+  let status = 'Pending';
+  if (actionsFound.includes('Reject')) {
       status = 'Rejected';
-  } else if (allValues.includes('mcc')) {
-      detail_action = 'Rekomendasi MCC';
-      status = 'Pending';
-  } else if (allValues.includes('nama') || allValues.includes('rekomendasi')) {
-      detail_action = 'Rekomendasi Nama';
-      status = 'Pending';
-  } else if (allValues.includes('done') || allValues.includes('selesai') || allValues.includes('sesuai')) {
+  } else if (actionsFound.includes('Whitelist')) {
       status = 'Done';
-      detail_action = 'Whitelist';
   }
 
   return {
