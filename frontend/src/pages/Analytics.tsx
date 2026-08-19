@@ -222,14 +222,14 @@ function AnalyticsPage() {
       </div>
 
       {/* Action Ratio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="flex flex-col gap-6">
         <Card>
           <CardHead title="Rasio Action Per PJP" />
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
-                {["PJP", "Rek.Nama", "Rek.MCC", "Whitelist", "Rejected"].map(h => (
-                  <th key={h} className="text-right first:text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">{h}</th>
+                {["PJP", "Rek.Nama", "Rek.MCC", "Whitelist", "Rejected", "WL+Nama", "WL+MCC", "Nama+MCC"].map(h => (
+                  <th key={h} className="text-right first:text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -241,14 +241,25 @@ function AnalyticsPage() {
                   <td className="px-4 py-3 text-right text-slate-600">{row.rm}</td>
                   <td className="px-4 py-3 text-right text-emerald-600 font-medium">{row.wl}</td>
                   <td className="px-4 py-3 text-right text-[#E32636] font-medium">{row.rj}</td>
+                  <td className="px-4 py-3 text-right text-indigo-600 font-medium">{row.wl_rn > 0 ? row.wl_rn : '-'}</td>
+                  <td className="px-4 py-3 text-right text-indigo-600 font-medium">{row.wl_rm > 0 ? row.wl_rm : '-'}</td>
+                  <td className="px-4 py-3 text-right text-orange-500 font-medium">{row.rn_rm > 0 ? row.rn_rm : '-'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <div className="p-4 bg-slate-50/80 border-t border-slate-100 text-xs text-slate-500 rounded-b-xl">
+            <span className="font-semibold text-slate-600">Keterangan (Double Action):</span>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-1">
+              <span><b className="text-indigo-600">WL+Nama:</b> Whitelist & Rekomendasi Nama</span>
+              <span><b className="text-indigo-600">WL+MCC:</b> Whitelist & Rekomendasi MCC</span>
+              <span><b className="text-orange-500">Nama+MCC:</b> Rekomendasi Nama & Rekomendasi MCC</span>
+            </div>
+          </div>
         </Card>
         
         <Card>
-          <CardHead title="Tren Tahunan — Perbandingan Volume Per Bulan" />
+          <CardHead title="Tren Tahunan | Perbandingan Volume Per Bulan" />
           <div className="p-6">
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={dashboardData?.monthlyTrend || monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -257,9 +268,9 @@ function AnalyticsPage() {
                 <YAxis allowDecimals={false} tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Line type="monotone" dataKey="total"    stroke="#94a3b8" strokeWidth={2} dot={{ fill: "#94a3b8", r: 4, strokeWidth: 0 }} name="Total" />
-                <Line type="monotone" dataKey="done"     stroke="#E32636" strokeWidth={3} dot={{ fill: "#E32636", r: 4, strokeWidth: 0 }} name="Done" />
-                <Line type="monotone" dataKey="pending"  stroke="#f59e0b" strokeWidth={2} dot={false} name="Pending" strokeDasharray="4 4" />
-                <Line type="monotone" dataKey="rejected" stroke="#ef4444" strokeWidth={2} dot={false} name="Rejected" strokeDasharray="4 4" />
+                <Line type="monotone" dataKey="done"     stroke="#E32636" strokeWidth={3} dot={{ fill: "#E32636", r: 4, strokeWidth: 0 }} name="Whitelist" />
+                <Line type="monotone" dataKey="pending"  stroke="#f59e0b" strokeWidth={2} dot={false} name="Rekomendasi" strokeDasharray="4 4" />
+                <Line type="monotone" dataKey="rejected" stroke="#ef4444" strokeWidth={2} dot={false} name="Ditolak" strokeDasharray="4 4" />
               </LineChart>
             </ResponsiveContainer>
           </div>

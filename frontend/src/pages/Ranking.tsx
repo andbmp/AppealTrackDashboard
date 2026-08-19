@@ -128,7 +128,7 @@ function RankingPage() {
               <YAxis type="category" dataKey="name" tick={{ fill: "#475569", fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600 }} axisLine={false} tickLine={false} width={100} />
               <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
               <Bar dataKey="volume" name="Volume" fill="#94a3b8" radius={[0, 4, 4, 0]} maxBarSize={20} />
-              <Bar dataKey="done"   name="Done"   fill="#E32636" radius={[0, 4, 4, 0]} maxBarSize={20} />
+              <Bar dataKey="done"   name="Whitelist"   fill="#E32636" radius={[0, 4, 4, 0]} maxBarSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </div>
