@@ -13,6 +13,10 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       ? `WHERE report_date BETWEEN $1 AND $2` 
       : ``;
     const params = startDate && endDate ? [startDate, endDate] : [];
+    
+    const anomalyFilter = startDate && endDate 
+      ? `WHERE report_date BETWEEN '${(startDate as string).replace(/'/g, "")}' AND '${(endDate as string).replace(/'/g, "")}'` 
+      : ``;
 
     const getMccQuery = async (interval: string) => {
       const effectiveFilter = startDate && endDate 
@@ -63,7 +67,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       tiering,
       forecast,
       anomalies,
-      heatDateRaw
+      heatDateRaw,
+      mapRegionQuery
     ] = await Promise.all([
       query(`SELECT COUNT(*) as total_appeal FROM APPEALS ${dateFilter}`, params),
       query(`SELECT COUNT(DISTINCT mcc) as total_mcc FROM APPEALS ${dateFilter}`, params),
@@ -116,8 +121,9 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       `),
       getTiering(),
       getForecast(),
-      detectAnomalies(),
-      query(`SELECT EXTRACT(DAY FROM report_date) as date_num, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY date_num ORDER BY date_num`, params)
+      detectAnomalies(anomalyFilter),
+      query(`SELECT EXTRACT(DAY FROM report_date) as date_num, COUNT(*) as count FROM APPEALS ${dateFilter} GROUP BY date_num ORDER BY date_num`, params),
+      query(`SELECT pjp_name, COUNT(*) as volume FROM APPEALS ${dateFilter} GROUP BY pjp_name`, params)
     ]);
 
     const dayMap = { 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu", 7: "Minggu" };
@@ -147,6 +153,46 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       records: Number(r.rows_processed)
     }));
 
+    const provinceMap: Record<string, string> = {
+      'BANK SUMUT': 'SUMATERA UTARA',
+      'BANK SULSELBAR': 'SULAWESI SELATAN',
+      'BANK SULUTGO': 'SULAWESI UTARA',
+      'BANK JATENG': 'JAWA TENGAH',
+      'BANK JATIM': 'JAWA TIMUR',
+      'BANK BJB': 'JAWA BARAT',
+      'BANK BPD BALI': 'BALI',
+      'BANK DKI': 'DKI JAKARTA',
+      'BANK PAPUA': 'PAPUA',
+      'BANK ACEH': 'ACEH',
+      'BANK RIAU KEPRI SYARIAH': 'RIAU',
+      'BANK SUMSELBABEL': 'SUMATERA SELATAN',
+      'BANK BANTEN': 'BANTEN',
+      'BANK NAGARI': 'SUMATERA BARAT',
+      'BANK SULTRA': 'SULAWESI TENGGARA',
+      'BANK KALBAR': 'KALIMANTAN BARAT',
+      'BANK KALSEL': 'KALIMANTAN SELATAN',
+      'BANK KALTENG': 'KALIMANTAN TENGAH',
+      'BANK KALTIMTARA': 'KALIMANTAN TIMUR',
+      'BANK NTB SYARIAH': 'NUSA TENGGARA BARAT',
+      'BANK NTT': 'NUSA TENGGARA TIMUR',
+      'BANK MALUKU MALUT': 'MALUKU',
+      'BANK JAMBI': 'JAMBI',
+      'BANK BENGKULU': 'BENGKULU',
+      'BANK LAMPUNG': 'LAMPUNG',
+    };
+    
+    const mapDataMap: Record<string, number> = {};
+    if (mapRegionQuery && mapRegionQuery.rows) {
+      mapRegionQuery.rows.forEach(r => {
+        const prov = provinceMap[r.pjp_name.toUpperCase()] || 'DKI JAKARTA';
+        mapDataMap[prov] = (mapDataMap[prov] || 0) + Number(r.volume);
+      });
+    }
+    const mapData = Object.keys(mapDataMap).map(prov => ({
+      id: prov,
+      value: mapDataMap[prov]
+    }));
+
     res.json({
       totalAppeal: totalAppealQuery.rows[0].total_appeal,
       uniqueMcc: mccQuery.rows[0].total_mcc,
@@ -168,6 +214,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       monthlyTrend: formattedTrend,
       top5: formattedTop,
       activityLog,
+      mapData,
       advanced: {
         tiering,
         forecast,

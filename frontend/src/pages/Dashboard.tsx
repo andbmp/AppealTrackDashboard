@@ -125,7 +125,7 @@ export default function Dashboard({ auth }: { auth: any }) {
         <div className="bg-red-50/50 border border-red-200 rounded-xl p-6 lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="text-red-600" size={24} />
-            <h2 className="font-bold text-red-800 text-lg">Peringatan Anomali Sistem (15 Hari Terakhir)</h2>
+            <h2 className="font-bold text-red-800 text-lg">Peringatan Anomali Sistem</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-2">
             {data.advanced.anomalies.anomaliesDetected.map((ano: any, i: number) => (
@@ -145,7 +145,7 @@ export default function Dashboard({ auth }: { auth: any }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* FR-11: Grafik Batang Jumlah Proses Per Tanggal */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col lg:col-span-2">
           <div className="flex items-center gap-2 mb-6">
              <BarChart3 className="text-slate-400" size={20} />
              <h2 className="font-bold text-slate-800 text-lg">Tren Jumlah Proses Harian</h2>
@@ -157,10 +157,30 @@ export default function Dashboard({ auth }: { auth: any }) {
                 <p className="text-sm">Tidak ada data untuk periode ini</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.volumePerDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <div className="w-full h-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-2">
+                <div style={{ minWidth: `${data.volumePerDate.length * 45}px`, width: '100%', height: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.volumePerDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="tanggal" tickFormatter={(str) => str ? str.split('/')[0] : ''} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <XAxis 
+                    dataKey="tanggal" 
+                    tickFormatter={(str) => {
+                      if (!str) return '';
+                      const p = str.split('/');
+                      if (p.length < 2) return str;
+                      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+                      return `${p[0]} ${months[parseInt(p[1], 10) - 1] || p[1]}`;
+                    }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748b', fontSize: 10}} 
+                    dy={10}
+                    dx={-5}
+                    angle={-45}
+                    textAnchor="end"
+                    height={50}
+                    interval={0}
+                  />
                   <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                   <Tooltip 
                     cursor={{fill: '#f8fafc'}}
@@ -169,12 +189,14 @@ export default function Dashboard({ auth }: { auth: any }) {
                   <Bar dataKey="volume" fill="#E32636" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
+                </div>
+              </div>
             )}
           </div>
         </div>
 
         {/* FR-08: Grafik Statistik Per PJP (Status Done) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-[400px] flex flex-col lg:col-span-2">
           <div className="flex items-center gap-2 mb-6">
              <PieIcon className="text-slate-400" size={20} />
              <h2 className="font-bold text-slate-800 text-lg">Distribusi PJP Action 'Whitelist'</h2>
