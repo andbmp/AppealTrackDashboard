@@ -98,10 +98,22 @@ export const uploadData = async (req: AuthRequest, res: Response): Promise<void>
         successCount = await UploadService.bulkUpsertAppeals(client, cleanedRows);
       }
 
+      // Dapatkan User ID yang valid agar tidak terkena Foreign Key Constraint
+      let validUserId = req.user?.id || null;
+      if (validUserId) {
+        const userCheck = await client.query('SELECT id FROM USERS WHERE id = $1', [validUserId]);
+        if (userCheck.rows.length === 0) validUserId = null;
+      }
+      
+      if (!validUserId) {
+        const firstUser = await client.query('SELECT id FROM USERS LIMIT 1');
+        if (firstUser.rows.length > 0) validUserId = firstUser.rows[0].id;
+      }
+
       // Log to IMPORT_LOGS
       await client.query(
         'INSERT INTO IMPORT_LOGS (user_id, source_type, status, rows_processed) VALUES ($1, $2, $3, $4)',
-        [req.user?.id, sourceType, errors.length > 0 ? 'Partial' : 'Success', cleanedRows.length]
+        [validUserId, sourceType, errors.length > 0 ? 'Partial' : 'Success', cleanedRows.length]
       );
 
       await client.query('COMMIT');
@@ -121,9 +133,17 @@ export const uploadData = async (req: AuthRequest, res: Response): Promise<void>
         if (anomalyData.anomaliesDetected && anomalyData.anomaliesDetected.length > 0) {
           // TODO: Ambil email dari database SCHEDULED_REPORTS. Sementara pakai dummy/fallback:
           const emailListRes = await client.query('SELECT recipient_emails FROM SCHEDULED_REPORTS LIMIT 1');
-          let recipients = ["ops-team@bank.go.id"];
+          let recipients: string[] = [];
           if (emailListRes.rows.length > 0 && emailListRes.rows[0].recipient_emails) {
             recipients = emailListRes.rows[0].recipient_emails.split('\n').map((e: string) => e.trim()).filter(Boolean);
+          } else {
+            // Ambil email Admin dari database jika tabel jadwal laporan kosong
+            const adminRes = await client.query("SELECT email FROM USERS WHERE role = 'Admin' LIMIT 1");
+            if (adminRes.rows.length > 0) {
+              recipients = [adminRes.rows[0].email];
+            } else {
+              recipients = ["admin@gmail.com"];
+            }
           }
           // Kirim email secara asynchronous agar tidak memblokir respon ke client
           sendAnomalyEmail(recipients, anomalyData.anomaliesDetected).catch(console.error);
