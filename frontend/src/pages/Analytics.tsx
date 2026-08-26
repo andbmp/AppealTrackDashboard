@@ -3,6 +3,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Card, CardHead, Tip } from '../components/ui';
 import { monthlyTrend, mccData, heatmapData } from '../store/data';
 import api from '../services/api';
+import MapCluster from '../components/MapCluster';
 
 export default 
 function AnalyticsPage() {
@@ -221,6 +222,20 @@ function AnalyticsPage() {
         )}
       </div>
 
+      {/* Geospatial Map */}
+      <div className="flex flex-col gap-6">
+        <Card>
+          <CardHead title="Sebaran Data Regional / Cluster PJP" extra={<span className="text-xs font-medium text-slate-500">Berbasis Lokasi Kantor Pusat</span>} />
+          <div className="p-4" style={{ height: 400 }}>
+             {dashboardData?.mapData ? (
+               <MapCluster data={dashboardData.mapData} />
+             ) : (
+               <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">Tidak ada data spasial</div>
+             )}
+          </div>
+        </Card>
+      </div>
+
       {/* Action Ratio */}
       <div className="flex flex-col gap-6">
         <Card>
@@ -228,7 +243,7 @@ function AnalyticsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
-                {["PJP", "Rek.Nama", "Rek.MCC", "Whitelist", "Rejected", "WL+Nama", "WL+MCC", "Nama+MCC"].map(h => (
+                {["PJP", "Rek.Nama", "Rek.MCC", "WL+Nama", "WL+MCC", "Nama+MCC", "Whitelist", "Rejected"].map(h => (
                   <th key={h} className="text-right first:text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -239,11 +254,11 @@ function AnalyticsPage() {
                   <td className="px-4 py-3 text-slate-800 font-bold truncate max-w-[100px]">{row.pjp}</td>
                   <td className="px-4 py-3 text-right text-slate-600">{row.rn}</td>
                   <td className="px-4 py-3 text-right text-slate-600">{row.rm}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row.wl_rn > 0 ? row.wl_rn : '-'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row.wl_rm > 0 ? row.wl_rm : '-'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row.rn_rm > 0 ? row.rn_rm : '-'}</td>
                   <td className="px-4 py-3 text-right text-emerald-600 font-medium">{row.wl}</td>
                   <td className="px-4 py-3 text-right text-[#E32636] font-medium">{row.rj}</td>
-                  <td className="px-4 py-3 text-right text-indigo-600 font-medium">{row.wl_rn > 0 ? row.wl_rn : '-'}</td>
-                  <td className="px-4 py-3 text-right text-indigo-600 font-medium">{row.wl_rm > 0 ? row.wl_rm : '-'}</td>
-                  <td className="px-4 py-3 text-right text-orange-500 font-medium">{row.rn_rm > 0 ? row.rn_rm : '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -268,7 +283,7 @@ function AnalyticsPage() {
                 <YAxis allowDecimals={false} tick={{ fill: "#64748b", fontSize: 11, fontFamily: "Inter, sans-serif" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Line type="monotone" dataKey="total"    stroke="#94a3b8" strokeWidth={2} dot={{ fill: "#94a3b8", r: 4, strokeWidth: 0 }} name="Total" />
-                <Line type="monotone" dataKey="done"     stroke="#E32636" strokeWidth={3} dot={{ fill: "#E32636", r: 4, strokeWidth: 0 }} name="Whitelist" />
+                <Line type="monotone" dataKey="done"     stroke="#10b981" strokeWidth={3} dot={{ fill: "#10b981", r: 4, strokeWidth: 0 }} name="Whitelist" />
                 <Line type="monotone" dataKey="pending"  stroke="#f59e0b" strokeWidth={2} dot={false} name="Rekomendasi" strokeDasharray="4 4" />
                 <Line type="monotone" dataKey="rejected" stroke="#ef4444" strokeWidth={2} dot={false} name="Ditolak" strokeDasharray="4 4" />
               </LineChart>

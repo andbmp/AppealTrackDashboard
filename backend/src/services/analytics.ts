@@ -50,132 +50,114 @@ export async function getForecast() {
   }
 }
 
-export async function detectAnomalies() {
+export async function detectAnomalies(dateFilter: string = "") {
    const client = await getClient();
    const anomaliesDetected: any[] = [];
    try {
-     const maxDateRes = await client.query(`SELECT MAX(report_date) as max_date FROM APPEALS`);
-     const anchorDate = maxDateRes.rows[0].max_date ? `'${maxDateRes.rows[0].max_date.toISOString().split('T')[0]}'` : 'CURRENT_DATE';
-
-     // Hitung tiering historis (HANYA berdasarkan data sebelum 7 hari terakhir)
-     // Ini mencegah "Paradoks Tier": di mana PJP Tier 3 yang mendadak melonjak langsung dianggap Tier 2 dan lolos dari deteksi.
-     const histTiers = await client.query(`
+     // 1. Tentukan Tier tiap PJP berdasarkan data historis (tanpa memedulikan dateFilter)
+     // Ini memastikan PJP Tier 1 tetap dianggap Tier 1 walaupun mereka vakum (0 pengajuan) di filter saat ini.
+     const tierQuery = await client.query(`
        SELECT pjp_name, COUNT(*) as vol 
        FROM APPEALS 
-       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '45 days'
-       AND report_date < ${anchorDate}::DATE - INTERVAL '15 days'
        GROUP BY pjp_name
      `);
      
-     const tier1Names: string[] = [];
-     const tier3Names: string[] = [];
-     
-     histTiers.rows.forEach(r => {
+     const tier1: string[] = [];
+     const tier3: string[] = [];
+     tierQuery.rows.forEach(r => {
        const v = parseInt(r.vol);
-       if (v > 20) tier1Names.push(r.pjp_name);
-       else if (v < 5) tier3Names.push(r.pjp_name);
+       if (v > 20) tier1.push(r.pjp_name);
+       else if (v < 5) tier3.push(r.pjp_name);
      });
 
-     // 1. Anomali FR-4.3: PJP [tier 1] mendadak 0 pengajuan (7 hari terakhir)
-     if (tier1Names.length > 0) {
-       const recentT1 = await client.query(`
-         SELECT DISTINCT pjp_name FROM APPEALS 
-         WHERE report_date >= ${anchorDate}::DATE - INTERVAL '15 days' 
-         AND pjp_name = ANY($1)
-       `, [tier1Names]);
-        const activeT1 = recentT1.rows.map(r => r.pjp_name);
-       const inactiveT1 = tier1Names.filter((pjp: string) => !activeT1.includes(pjp));
-        if (inactiveT1.length > 0) {
-         const pjpList = inactiveT1.join(', ');
+       // 2. [FR-4.3] PJP [tier 1] yang mendadak mengirimkan 0 pengajuan (Vakum > 15 Hari)
+       if (tier1.length > 0) {
+         const t1Dummy = tier1.length > 0 ? tier1 : ['-'];
+         const vacuumQuery = `
+          WITH pjp_dates AS (
+            SELECT pjp_name, report_date, LAG(report_date) OVER (PARTITION BY pjp_name ORDER BY report_date) as prev_date
+            FROM (SELECT DISTINCT pjp_name, report_date FROM APPEALS WHERE pjp_name = ANY($1)) sub
+          )
+          SELECT pjp_name, report_date as last_date, prev_date, (report_date - prev_date) as gap_days
+          FROM pjp_dates
+          ${dateFilter ? dateFilter.replace("WHERE report_date", "WHERE report_date").replace("WHERE", "WHERE (") + ") AND " : "WHERE "} (report_date - prev_date) >= 15
+       `;
+       
+       const vacuums = await client.query(vacuumQuery, [t1Dummy]);
+       for (const row of vacuums.rows) {
          anomaliesDetected.push({
-           type: 'TIER1_ZERO',
-           title: `Peringatan: ${inactiveT1.length} PJP (Tier 1) Vakum`,
-           description: `Terdapat ${inactiveT1.length} PJP Tier 1 (${pjpList}) yang mendadak mengirimkan 0 pengajuan appeal dalam 15 hari terakhir. Silakan selidiki hambatan operasional mereka.`,
+           type: 'TIER1_VACUUM',
+           title: `Peringatan: PJP Tier 1 (${row.pjp_name}) Vakum`,
+           description: `Terdapat celah kosong pengajuan selama ${row.gap_days} hari antara ${new Date(row.prev_date).toLocaleDateString('id-ID')} hingga ${new Date(row.last_date).toLocaleDateString('id-ID')} untuk PJP Tier 1 ini.`,
            severity: 'high',
-           date: maxDateRes.rows[0].max_date || new Date()
+           date: row.last_date
          });
        }
-     }
 
-     // 2. Anomali FR-4.3: PJP [tier 3] lonjakan vs rata-rata Tier 3 bulan sebelumnya
-     const t3Dummy = tier3Names.length > 0 ? tier3Names : ['-'];
-     const t3AvgRes = await client.query(`
-       SELECT COUNT(*)::FLOAT / 30 as avg_daily 
-       FROM APPEALS 
-       WHERE pjp_name = ANY($1) 
-       AND report_date >= ${anchorDate}::DATE - INTERVAL '45 days' 
-       AND report_date < ${anchorDate}::DATE - INTERVAL '15 days'
-     `, [t3Dummy]);
-     const t3Avg = t3AvgRes.rows[0].avg_daily || 1;
-
-     const t3Spikes = await client.query(`
-       SELECT pjp_name, report_date, COUNT(*) as vol
-       FROM APPEALS
-       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '15 days'
-       AND pjp_name = ANY($1)
-       GROUP BY pjp_name, report_date
-       HAVING COUNT(*) > ${Math.max(t3Avg * 3, 5)}
-       ORDER BY report_date DESC
-     `, [t3Dummy]);
-
-     for (const row of t3Spikes.rows) {
-       anomaliesDetected.push({
-         type: 'TIER3_SPIKE',
-         title: `Lonjakan Ekstrem Tier 3: ${row.pjp_name}`,
-         description: `Terdeteksi ${row.vol} pengajuan pada ${new Date(row.report_date).toLocaleDateString('id-ID')}. Ini melonjak sangat jauh dari rata-rata PJP Tier 3 bulan lalu.`,
-         severity: 'high',
-         date: row.report_date
-       });
-     }
-
-     // 3. Anomali FR-4.3: PJP [all tier] lonjakan vs rata-rata seluruh tier bulan lalu
-     const allAvgRes = await client.query(`
-       SELECT COUNT(*)::FLOAT / 30 as avg_daily 
-       FROM APPEALS 
-       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '45 days' 
-       AND report_date < ${anchorDate}::DATE - INTERVAL '15 days'
+       }
+       
+     // Hitung rentang hari dari dateFilter untuk pembagi rata-rata harian (agar rata-rata tidak melonjak salah)
+     const rangeRes = await client.query(`
+       SELECT (MAX(report_date) - MIN(report_date)) + 1 as days FROM APPEALS ${dateFilter}
      `);
-     const allAvg = allAvgRes.rows[0].avg_daily || 1;
+     const totalDays = Math.max(parseInt(rangeRes.rows[0].days) || 1, 1);
 
-     const allSpikes = await client.query(`
-       SELECT pjp_name, report_date, COUNT(*) as vol
-       FROM APPEALS
-       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '15 days'
-       GROUP BY pjp_name, report_date
-       HAVING COUNT(*) > ${Math.max(allAvg * 2, 10)}
-       ORDER BY report_date DESC
-     `);
+     // 3. [FR-4.3] PJP [tier 3] melonjak vs Rata-rata Tier 3
+     if (tier3.length > 0) {
+       const t3Dummy = tier3.length > 0 ? tier3 : ['-'];
+       const t3AvgRes = await client.query(`
+         SELECT COUNT(*)::FLOAT / $2 as avg_daily 
+         FROM APPEALS ${dateFilter ? dateFilter + " AND " : "WHERE "} pjp_name = ANY($1)
+       `, [t3Dummy, totalDays]);
+       const t3Avg = t3AvgRes.rows[0].avg_daily || 1;
 
-     for (const row of allSpikes.rows) {
-       if (!tier3Names.includes(row.pjp_name)) { // Jangan didobel jika sudah masuk di alarm Tier 3
+       const t3Spikes = await client.query(`
+         SELECT pjp_name, report_date, COUNT(*) as vol
+         FROM APPEALS
+         ${dateFilter ? dateFilter + " AND " : "WHERE "} pjp_name = ANY($1)
+         GROUP BY pjp_name, report_date
+         HAVING COUNT(*) > ${Math.max(t3Avg * 3, 5)}
+         ORDER BY report_date DESC
+         LIMIT 10
+       `, [t3Dummy]);
+
+       for (const row of t3Spikes.rows) {
          anomaliesDetected.push({
-           type: 'ALL_TIER_SPIKE',
-           title: `Lonjakan Volume Sistem: ${row.pjp_name}`,
-           description: `Terdapat ${row.vol} pengajuan pada ${new Date(row.report_date).toLocaleDateString('id-ID')}. Lonjakan ini melampaui rata-rata harian sistem dari bulan sebelumnya.`,
-           severity: 'medium',
+           type: 'TIER3_SPIKE',
+           title: `Lonjakan Ekstrem Tier 3: ${row.pjp_name}`,
+           description: `Terdeteksi ${row.vol} pengajuan pada ${new Date(row.report_date).toLocaleDateString('id-ID')}. Ini melonjak 3x lipat di atas rata-rata harian seluruh PJP Tier 3 (${Math.round(t3Avg)}).`,
+           severity: 'high',
            date: row.report_date
          });
        }
      }
 
-     // 4. Anomali FR-4.3 (Kalimat Utama): Konsentrasi Fraud pada satu kategori merchant (MCC)
-     const mccSpikes = await client.query(`
-       SELECT mcc, report_date, COUNT(*) as vol
+     // 4. [FR-4.3] PJP [all tier] melonjak vs Rata-rata Seluruh Tier
+     const allAvgRes = await client.query(`
+       SELECT COUNT(*)::FLOAT / $1 as avg_daily FROM APPEALS ${dateFilter}
+     `, [totalDays]);
+     const allAvg = allAvgRes.rows[0].avg_daily || 1;
+
+     const allSpikes = await client.query(`
+       SELECT pjp_name, report_date, COUNT(*) as vol
        FROM APPEALS
-       WHERE report_date >= ${anchorDate}::DATE - INTERVAL '15 days'
-       GROUP BY mcc, report_date
-       HAVING COUNT(*) > 10
+       ${dateFilter}
+       GROUP BY pjp_name, report_date
+       HAVING COUNT(*) > ${Math.max(allAvg * 2, 10)}
        ORDER BY report_date DESC
+       LIMIT 15
      `);
 
-     for (const row of mccSpikes.rows) {
-       anomaliesDetected.push({
-         type: 'MCC_SPIKE',
-         title: `Konsentrasi Fraud Berisiko (MCC: ${row.mcc})`,
-         description: `Terdapat ${row.vol} pengajuan pada kategori MCC ${row.mcc} dalam satu hari (${new Date(row.report_date).toLocaleDateString('id-ID')}). Harap periksa kemungkinan fraud/pencucian uang.`,
-         severity: 'high',
-         date: row.report_date
-       });
+     for (const row of allSpikes.rows) {
+       if (!tier3.includes(row.pjp_name)) { // Hindari duplikasi alarm jika sudah masuk alert Tier 3
+         anomaliesDetected.push({
+           type: 'ALL_TIER_SPIKE',
+           title: `Lonjakan Volume Sistem: ${row.pjp_name}`,
+           description: `Terdapat ${row.vol} pengajuan pada ${new Date(row.report_date).toLocaleDateString('id-ID')}. Ini melampaui 2x lipat rata-rata harian sistem secara keseluruhan (${Math.round(allAvg)}).`,
+           severity: 'medium',
+           date: row.report_date
+         });
+       }
      }
 
      return { anomaliesDetected };
